@@ -1,0 +1,7 @@
+gst-plugins-ugly0.10 (0.10.18-8slp2+10) unstable; urgency=low
+
+  * Initial release
+  * Git: pkgs/g/gst-plugins-ugly0.10
+  * Tag: gst-plugins-ugly0.10.18-8slp2+10
+
+ -- Seungbae Shin <seungbae.shin@samsung.com>  Wed, 07 Dec 2011 12:11:13 +0900
