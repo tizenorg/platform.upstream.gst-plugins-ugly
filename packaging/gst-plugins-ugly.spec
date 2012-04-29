@@ -1,18 +1,20 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
 Version:    0.10.18
-Release:    1
+Release:    2
 Group:      TO_BE/FILLED_IN
-License:    TO_BE/FILLED_IN
+License:    LGPLv2+
 Source0:    %{name}-%{version}.tar.gz
 Patch0 :    gst-plugins-ugly-disable-gtk-doc.patch
 BuildRequires:  gettext-tools
 BuildRequires:  which
-BuildRequires:  gst-plugins-base-devel  
+BuildRequires:  gst-plugins-base-devel
 BuildRequires:  pkgconfig(gstreamer-0.10) 
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(liboil-0.3)
 BuildRequires:  pkgconfig(drm-service)
+BuildRequires:  pkgconfig(opencore-amrnb)
+BuildRequires:  pkgconfig(opencore-amrwb)
 
 %description
  GStreamer is a streaming media framework, based on graphs of filters
@@ -90,7 +92,6 @@ CFLAGS=" %{optflags} \
 	--disable-realmedia    \
 	--disable-synaesthesia \
 	--disable-a52dec       \
-	--disable-amrnb        \
 	--disable-cdio \
 	--disable-dvdread      \
 	--disable-dvdnav       \
@@ -115,4 +116,7 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %{_libdir}/gstreamer-0.10/libgstmpegaudioparse.so
 %{_libdir}/gstreamer-0.10/libgstasf.so
+%{_libdir}/gstreamer-0.10/libgstamrnb.so
+%{_libdir}/gstreamer-0.10/libgstamrwbdec.so
+%exclude %{_datadir}/gstreamer-0.10/presets/GstAmrnbEnc.prs
 
