@@ -5,6 +5,7 @@ Release:    2
 Group:      TO_BE/FILLED_IN
 License:    LGPLv2+
 Source0:    %{name}-%{version}.tar.gz
+Source1001: packaging/gst-plugins-ugly.manifest 
 Patch0 :    gst-plugins-ugly-disable-gtk-doc.patch
 BuildRequires:  gettext-tools
 BuildRequires:  which
@@ -35,6 +36,7 @@ BuildRequires:  pkgconfig(opencore-amrwb)
 
 
 %build
+cp %{SOURCE1001} .
 %ifarch %{arm}
 CFLAGS=" %{optflags} \
        -DGST_EXT_TIME_ANALYSIS         \
@@ -113,6 +115,7 @@ rm -rf %{buildroot}
 
 
 %files
+%manifest gst-plugins-ugly.manifest
 %defattr(-,root,root,-)
 %{_libdir}/gstreamer-0.10/libgstmpegaudioparse.so
 %{_libdir}/gstreamer-0.10/libgstasf.so
