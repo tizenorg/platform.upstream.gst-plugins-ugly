@@ -96,8 +96,7 @@ gst_dvd_read_src_base_init (gpointer g_class)
 {
   GstElementClass *element_class = GST_ELEMENT_CLASS (g_class);
 
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&srctemplate));
+  gst_element_class_add_static_pad_template (element_class, &srctemplate);
 
   gst_element_class_set_details_simple (element_class, "DVD Source",
       "Source/File/DVD",
@@ -326,11 +325,14 @@ cur_title_get_chapter_bounds (GstDvdReadSrc * src, gint chapter,
   *p_first_cell = pgc->program_map[pgn - 1] - 1;
 
   if (chapter == (src->num_chapters - 1)) {
-    *p_last_cell = pgc->nr_of_cells;
+    *p_last_cell = pgc->nr_of_cells - 1;
   } else {
     pgn_next_ch = src->vts_ptt_srpt->title[src->ttn - 1].ptt[chapter + 1].pgn;
     *p_last_cell = pgc->program_map[pgn_next_ch - 1] - 1;
   }
+
+  GST_DEBUG_OBJECT (src, "Chapter %d bounds: %d %d (within %d cells)",
+      chapter, *p_first_cell, *p_last_cell, pgc->nr_of_cells);
 }
 
 static gboolean
@@ -522,15 +524,26 @@ gst_dvd_read_src_goto_title (GstDvdReadSrc * src, gint title, gint angle)
   /* subtitle */
   for (i = 0; i < src->vts_file->vtsi_mat->nr_of_vts_subp_streams; i++) {
     const subp_attr_t *u;
+    const video_attr_t *v;
+    gint sid;
 
     /* subpicture stream present? */
     if (pgc0 != NULL && (pgc0->subp_control[i] & 0x80000000) == 0)
       continue;
 
     u = &src->vts_file->vtsi_mat->vts_subp_attr[i];
+    v = &src->vts_file->vtsi_mat->vts_video_attr;
+
+    sid = i;
+    if (pgc0 != NULL) {
+      if (v->display_aspect_ratio == 0)         /* 4:3 */
+        sid = (pgc0->subp_control[i] >> 24) & 0x1f;
+      else if (v->display_aspect_ratio == 3)    /* 16:9 */
+        sid = (pgc0->subp_control[i] >> 8) & 0x1f;
+    }
 
     if (u->type) {
-      t = g_strdup_printf ("subtitle-%d-language", i);
+      t = g_strdup_printf ("subtitle-%d-language", sid);
       lang_code[0] = (u->lang_code >> 8) & 0xff;
       lang_code[1] = u->lang_code & 0xff;
       gst_structure_set (s, t, G_TYPE_STRING, lang_code, NULL);
@@ -540,7 +553,7 @@ gst_dvd_read_src_goto_title (GstDvdReadSrc * src, gint title, gint angle)
     }
 
     GST_INFO_OBJECT (src, "[%02d] Subtitle %02d: lang='%s', type=%d",
-        src->title + 1, i, lang_code, u->type);
+        src->title + 1, sid, lang_code, u->type);
   }
 
   src->title_lang_event_pending =
@@ -682,23 +695,21 @@ gst_dvd_read_src_get_time_for_sector (GstDvdReadSrc * src, guint sector)
 static gint
 gst_dvd_read_src_get_sector_from_time (GstDvdReadSrc * src, GstClockTime ts)
 {
-  gint sector, i, j;
+  gint sector, j;
 
-  if (src->vts_tmapt == NULL || src->vts_tmapt->nr_of_tmaps == 0)
+  if (src->vts_tmapt == NULL || src->vts_tmapt->nr_of_tmaps < src->ttn)
     return -1;
 
   sector = 0;
-  for (i = 0; i < src->vts_tmapt->nr_of_tmaps; ++i) {
-    for (j = 0; j < src->vts_tmapt->tmap[i].nr_of_entries; ++j) {
-      GstClockTime entry_time;
+  for (j = 0; j < src->vts_tmapt->tmap[src->ttn - 1].nr_of_entries; ++j) {
+    GstClockTime entry_time;
 
-      entry_time = src->vts_tmapt->tmap[i].tmu * (j + 1) * GST_SECOND;
-      if (entry_time <= ts) {
-        sector = src->vts_tmapt->tmap[i].map_ent[j] & 0x7fffffff;
-      }
-      if (entry_time >= ts) {
-        return sector;
-      }
+    entry_time = src->vts_tmapt->tmap[src->ttn - 1].tmu * (j + 1) * GST_SECOND;
+    if (entry_time <= ts) {
+      sector = src->vts_tmapt->tmap[src->ttn - 1].map_ent[j] & 0x7fffffff;
+    }
+    if (entry_time >= ts) {
+      return sector;
     }
   }
 
@@ -1185,6 +1196,17 @@ gst_dvd_read_src_handle_seek_event (GstDvdReadSrc * src, GstEvent * event)
   return GST_BASE_SRC_CLASS (parent_class)->event (GST_BASE_SRC (src), event);
 }
 
+static void
+gst_dvd_read_src_get_sector_bounds (GstDvdReadSrc * src, gint * first,
+    gint * last)
+{
+  gint c1, c2, tmp;
+  cur_title_get_chapter_bounds (src, 0, &c1, &tmp);
+  cur_title_get_chapter_bounds (src, src->num_chapters - 1, &tmp, &c2);
+  *first = src->cur_pgc->cell_playback[c1].first_sector;
+  *last = src->cur_pgc->cell_playback[c2].last_sector;
+}
+
 static gboolean
 gst_dvd_read_src_do_seek (GstBaseSrc * basesrc, GstSegment * s)
 {
@@ -1202,9 +1224,18 @@ gst_dvd_read_src_do_seek (GstBaseSrc * basesrc, GstSegment * s)
     old = src->cur_pack;
 
     if (s->format == sector_format) {
+      gint first, last;
+      gst_dvd_read_src_get_sector_bounds (src, &first, &last);
+      GST_DEBUG_OBJECT (src, "Format is sector, seeking to %" G_GINT64_FORMAT,
+          s->last_stop);
       src->cur_pack = s->last_stop;
+      if (src->cur_pack < first)
+        src->cur_pack = first;
+      if (src->cur_pack > last)
+        src->cur_pack = last;
     } else if (s->format == GST_FORMAT_TIME) {
       gint sector;
+      GST_DEBUG_OBJECT (src, "Format is time");
 
       sector = gst_dvd_read_src_get_sector_from_time (src, s->last_stop);
 
@@ -1217,12 +1248,16 @@ gst_dvd_read_src_do_seek (GstBaseSrc * basesrc, GstSegment * s)
       src->cur_pack = sector;
     } else {
       /* byte format */
+      gint first, last;
+      gst_dvd_read_src_get_sector_bounds (src, &first, &last);
+      GST_DEBUG_OBJECT (src, "Format is byte");
       src->cur_pack = s->last_stop / DVD_VIDEO_LB_LEN;
       if (((gint64) src->cur_pack * DVD_VIDEO_LB_LEN) != s->last_stop) {
         GST_LOG_OBJECT (src, "rounded down offset %" G_GINT64_FORMAT " => %"
             G_GINT64_FORMAT, s->last_stop,
             (gint64) src->cur_pack * DVD_VIDEO_LB_LEN);
       }
+      src->cur_pack += first;
     }
 
     if (!gst_dvd_read_src_goto_sector (src, src->angle)) {
@@ -1547,25 +1582,28 @@ static gboolean
 gst_dvd_read_src_goto_sector (GstDvdReadSrc * src, int angle)
 {
   gint seek_to = src->cur_pack;
-  gint chapter, sectors, next, cur, i;
+  gint chapter, next, cur, i;
 
   /* retrieve position */
   src->cur_pack = 0;
+  GST_DEBUG_OBJECT (src, "Goto sector %d, angle %d, within %d chapters",
+      seek_to, angle, src->num_chapters);
+
   for (i = 0; i < src->num_chapters; i++) {
     gint c1, c2;
 
     cur_title_get_chapter_bounds (src, i, &c1, &c2);
+    GST_DEBUG_OBJECT (src, " Looking in chapter %d, bounds: %d %d", i, c1, c2);
 
     for (next = cur = c1; cur < c2;) {
-      if (next != cur) {
-        sectors =
-            src->cur_pgc->cell_playback[cur].last_sector -
-            src->cur_pgc->cell_playback[cur].first_sector;
-        if (src->cur_pack + sectors > seek_to) {
-          chapter = i;
-          goto done;
-        }
-        src->cur_pack += sectors;
+      gint first = src->cur_pgc->cell_playback[cur].first_sector;
+      gint last = src->cur_pgc->cell_playback[cur].last_sector;
+      GST_DEBUG_OBJECT (src, "Cell %d sector bounds: %d %d", cur, first, last);
+      /* seeking to 0 should end up at first chapter in any case */
+      if ((seek_to >= first && seek_to <= last) || (seek_to == 0 && i == 0)) {
+        GST_DEBUG_OBJECT (src, "Seek target found in chapter %d", i);
+        chapter = i;
+        goto done;
       }
       cur = next;
       if (src->cur_pgc->cell_playback[cur].block_type == BLOCK_TYPE_ANGLE_BLOCK)

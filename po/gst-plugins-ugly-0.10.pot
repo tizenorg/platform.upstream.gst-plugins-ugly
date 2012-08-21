@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-ugly 0.10.18\n"
+"Project-Id-Version: gst-plugins-ugly 0.10.19\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2011-05-10 09:57+0100\n"
+"POT-Creation-Date: 2012-02-21 00:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,57 +28,57 @@ msgstr ""
 msgid "Disc is not an Audio CD."
 msgstr ""
 
-#: ext/dvdread/dvdreadsrc.c:225 ext/dvdread/dvdreadsrc.c:232
+#: ext/dvdread/dvdreadsrc.c:224 ext/dvdread/dvdreadsrc.c:231
 msgid "Could not open DVD"
 msgstr ""
 
-#: ext/dvdread/dvdreadsrc.c:239 ext/dvdread/dvdreadsrc.c:591
-#: ext/dvdread/dvdreadsrc.c:598
+#: ext/dvdread/dvdreadsrc.c:238 ext/dvdread/dvdreadsrc.c:604
+#: ext/dvdread/dvdreadsrc.c:611
 #, c-format
 msgid "Could not open DVD title %d"
 msgstr ""
 
-#: ext/dvdread/dvdreadsrc.c:245
+#: ext/dvdread/dvdreadsrc.c:244
 #, c-format
 msgid "Failed to go to chapter %d of DVD title %d"
 msgstr ""
 
-#: ext/dvdread/dvdreadsrc.c:605
+#: ext/dvdread/dvdreadsrc.c:618
 #, c-format
 msgid ""
 "Could not open DVD title %d. Interactive titles are not supported by this "
 "element"
 msgstr ""
 
-#: ext/dvdread/dvdreadsrc.c:953
+#: ext/dvdread/dvdreadsrc.c:964
 msgid ""
 "Could not read DVD. This may be because the DVD is encrypted and a DVD "
 "decryption library is not installed."
 msgstr ""
 
-#: ext/dvdread/dvdreadsrc.c:956
+#: ext/dvdread/dvdreadsrc.c:967
 msgid "Could not read DVD."
 msgstr ""
 
-#: ext/lame/gstlame.c:651
+#: ext/lame/gstlame.c:616
 msgid "Failed to configure LAME encoder. Check your encoding parameters."
 msgstr ""
 
-#: ext/lame/gstlame.c:745 ext/twolame/gsttwolame.c:515
+#: ext/lame/gstlame.c:720 ext/twolame/gsttwolame.c:496
 #, c-format
 msgid ""
 "The requested bitrate %d kbit/s for property '%s' is not allowed. The "
 "bitrate was changed to %d kbit/s."
 msgstr ""
 
-#: ext/twolame/gsttwolame.c:440
+#: ext/twolame/gsttwolame.c:421
 msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
 msgstr ""
 
-#: gst/asfdemux/gstasfdemux.c:383
+#: gst/asfdemux/gstasfdemux.c:397
 msgid "This stream contains no data."
 msgstr ""
 
-#: gst/asfdemux/gstasfdemux.c:390 gst/asfdemux/gstasfdemux.c:1659
+#: gst/asfdemux/gstasfdemux.c:404 gst/asfdemux/gstasfdemux.c:1673
 msgid "Internal data stream error."
 msgstr ""

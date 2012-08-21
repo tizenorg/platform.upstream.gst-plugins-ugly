@@ -43,6 +43,7 @@ require "gtkdoc-common.pl";
 my $MODULE;
 my $OUTPUT_DIR;
 my $INSPECT_DIR;
+my $VERBOSE;
 my $PRINT_VERSION;
 my $PRINT_HELP;
 my $TYPE_INIT_FUNC="g_type_init ()";
@@ -55,10 +56,11 @@ my $TYPE_INIT_FUNC="g_type_init ()";
 	   'type-init-func' => \$TYPE_INIT_FUNC,
 	   'output-dir' => \$OUTPUT_DIR,
 	   'inspect-dir' => \$INSPECT_DIR,
+	   'verbose' => \$VERBOSE,
 	   'version' => \$PRINT_VERSION,
 	   'help' => \$PRINT_HELP);
 
-GetOptions(\%optctl, "module=s", "source=s", "types:s", "output-dir:s", "inspect-dir:s", "nogtkinit", "type-init-func:s", "version", "help");
+GetOptions(\%optctl, "module=s", "source=s", "types:s", "output-dir:s", "inspect-dir:s", "nogtkinit", "type-init-func:s", "verbose", "version", "help");
 
 if ($NO_GTK_INIT) {
   # Do nothing. This just avoids a warning.
@@ -75,15 +77,19 @@ if (!$MODULE) {
 }
 
 if ($PRINT_HELP) {
-    print "gstdoc-scangobj version 1.5\n";
-    print "\n--module=MODULE_NAME  Name of the doc module being parsed";
-    print "\n--source=SOURCE_NAME  Name of the source module for plugins";
-    print "\n--types=FILE          The name of the file to store the types in";
-    print "\n--type-init-func=FUNC The init function to call instead of g_type_init ()";
-    print "\n--output-dir=DIRNAME  The directory where the results are stored";
-    print "\n--inspect-dir=DIRNAME  The directory where the plugin inspect data is stored";
-    print "\n--version             Print the version of this program";
-    print "\n--help                Print this help\n";
+    print <<EOF;
+gstdoc-scangobj version 1.5 - introspect gstreamer-plugins
+
+--module=MODULE_NAME          Name of the doc module being parsed
+--source=SOURCE_NAME          Name of the source module for plugins
+--types=FILE                  The name of the file to store the types in
+--type-init-func=FUNC         The init function to call instead of g_type_init()
+--output-dir=DIRNAME          The directory where the results are stored
+--inspect-dir=DIRNAME         The directory where the plugin inspect data is stored
+--verbose                     Print extra output while processing
+--version                     Print the version of this program
+--help                        Print this help
+EOF
     exit 0;
 }
 
@@ -104,6 +110,11 @@ my $old_prerequisites_filename = "$OUTPUT_DIR/$MODULE.prerequisites";
 my $new_prerequisites_filename = "$OUTPUT_DIR/$MODULE.prerequisites.new";
 my $old_args_filename = "$OUTPUT_DIR/$MODULE.args";
 my $new_args_filename = "$OUTPUT_DIR/$MODULE.args.new";
+
+my $debug_log="g_message";
+if (!defined($VERBOSE) or $VERBOSE eq "0") {
+    $debug_log="//$debug_log";
+}
 
 # write a C program to scan the types
 
@@ -221,7 +232,6 @@ get_object_types (void)
       plugin = (GstPlugin *) (plugins->data);
       plugins = g_list_next (plugins);
       source = gst_plugin_get_source (plugin);
-      /*g_print ("plugin: %s source: %s\\n", plugin->desc.name, source);*/
       if (!source || strcmp (source, "$SOURCE") != 0) {
         continue;
       }
@@ -230,7 +240,7 @@ get_object_types (void)
       if (gst_plugin_get_filename (plugin) == NULL)
         continue;
 
-      g_print ("plugin: %s source: %s\\n", plugin->desc.name, source);
+      $debug_log ("plugin: %s source: %s", plugin->desc.name, source);
 
       if (reinspect) {
         inspect_name = g_strdup_printf ("$INSPECT_DIR" G_DIR_SEPARATOR_S "plugin-%s.xml",
@@ -277,7 +287,7 @@ get_object_types (void)
           const gchar *pad_pres[] = { "always","sometimes","request" };
           GList *pads, *pad;
 
-          /*g_print ("  feature: %s\\n", feature->name);*/
+          $debug_log ("  feature: %s", feature->name);
 
           factory = GST_ELEMENT_FACTORY (feature);
           factories = g_list_prepend (factories, factory);
@@ -320,7 +330,7 @@ get_object_types (void)
 
     g_string_free (xmlstr, TRUE);
 
-    g_message ("number of element factories: %d", g_list_length (factories));
+    $debug_log ("number of element factories: %d", g_list_length (factories));
 
     /* allocate the object_types array to hold them */
     object_types = g_new0 (GType, g_list_length (factories)+$ntypes+1);
@@ -333,7 +343,7 @@ get_object_types (void)
       factory = GST_ELEMENT_FACTORY (l->data);
       type = gst_element_factory_get_element_type (factory);
       if (type != 0) {
-        g_message ("adding type %p for factory %s", (void *) type, gst_element_factory_get_longname (factory));
+        $debug_log ("adding type for factory %s", gst_element_factory_get_longname (factory));
         object_types[i++] = type;
       } else {
         g_message ("type info for factory %s not found",
@@ -522,7 +532,7 @@ output_object_signal (FILE *fp,
   gchar signal_name[128];
   gchar flags[16];
 
-  /*  g_print ("Object: %s Signal: %u\\n", object_name, signal_id);*/
+  $debug_log ("Object: %s Signal: %u", object_name, signal_id);
 
   param_num = 1;
   widget_num = event_num = callback_num = 0;
@@ -765,6 +775,16 @@ output_object_hierarchy (void)
   fclose (fp);
 }
 
+static int
+compare_types (const void *a, const void *b)
+{
+  const char *na = g_type_name (*((GType *)a));
+  const char *nb = g_type_name (*((GType *)b));
+
+  return g_strcmp0 (na, nb);
+}
+
+
 /* This is called recursively to output the hierarchy of a object. */
 static void
 output_hierarchy (FILE  *fp,
@@ -783,6 +803,8 @@ output_hierarchy (FILE  *fp,
   fprintf (fp, "%s\\n", g_type_name (type));
 
   children = g_type_children (type, &n_children);
+  qsort (children, n_children, sizeof (GType), compare_types);
+
 
   for (i=0; i < n_children; i++)
     output_hierarchy (fp, children[i], level + 1);
@@ -1547,15 +1569,20 @@ if ($CC =~ /libtool/) {
   $o_file = "$MODULE-scan.o"
 }
 
-print "gtk-doc: Compiling scanner\n";
-$command = "$CC $CFLAGS -c -o $o_file $MODULE-scan.c";
-system($command) == 0 or die "Compilation of scanner failed: $!\n";
+my $stdout="";
+if (!defined($VERBOSE) or $VERBOSE eq "0") {
+    $stdout=">/dev/null";
+}
 
-print "gtk-doc: Linking scanner\n";
-$command = "$LD -o $MODULE-scan $o_file $LDFLAGS";
+# Compiling scanner
+$command = "$CC $stdout $CFLAGS -c -o $o_file $MODULE-scan.c";
+system("($command)") == 0 or die "Compilation of scanner failed: $!\n";
+
+# Linking scanner
+$command = "$LD $stdout -o $MODULE-scan $o_file $LDFLAGS";
 system($command) == 0 or die "Linking of scanner failed: $!\n";
 
-print "gtk-doc: Running scanner $MODULE-scan\n";
+# Running scanner $MODULE-scan ";
 system("sh -c ./$MODULE-scan") == 0 or die "Scan failed: $!\n";
 
 if (!defined($ENV{"GTK_DOC_KEEP_INTERMEDIATE"})) {
@@ -1563,9 +1590,9 @@ if (!defined($ENV{"GTK_DOC_KEEP_INTERMEDIATE"})) {
 }
 
 &UpdateFileIfChanged ($old_hierarchy_filename, $new_hierarchy_filename, 0);
-&UpdateFileIfChanged ($old_interfaces_filename, $new_interfaces_filename, 0);
-&UpdateFileIfChanged ($old_prerequisites_filename, $new_prerequisites_filename, 0);
 # we will merge these in scangobj-merge.py
+#&UpdateFileIfChanged ($old_interfaces_filename, $new_interfaces_filename, 0);
+#&UpdateFileIfChanged ($old_prerequisites_filename, $new_prerequisites_filename, 0);
 #&UpdateFileIfChanged ($old_signals_filename, $new_signals_filename, 0);
 #&UpdateFileIfChanged ($old_args_filename, $new_args_filename, 0);
 

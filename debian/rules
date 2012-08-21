@@ -8,26 +8,26 @@
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
-CONFIGURE_OPTION=--prefix=/usr \
---disable-static \
---disable-nls \
---with-html-dir=/tmp/dump \
---disable-examples \
---disable-dvdlpcmdec   \
---disable-dvdsub       \
---disable-iec958       \
---disable-mpegstream   \
---disable-realmedia    \
---disable-synaesthesia \
---disable-a52dec       \
---disable-cdio \
---disable-dvdread      \
---disable-dvdnav       \
---disable-mad  \
---disable-mpeg2dec     \
---disable-sidplay      \
---disable-twolame      \
---disable-x264 
+CONFIGURE_OPTION=--prefix=/usr			\
+		--disable-static		\
+		--disable-nls			\
+		--with-html-dir=/tmp/dump	\
+		--disable-examples		\
+		--disable-dvdlpcmdec		\
+		--disable-dvdsub		\
+		--disable-iec958		\
+		--disable-mpegstream		\
+		--disable-realmedia		\
+		--disable-synaesthesia		\
+		--disable-a52dec		\
+		--disable-cdio			\
+		--disable-dvdread		\
+		--disable-dvdnav		\
+		--disable-mad			\
+		--disable-mpeg2dec		\
+		--disable-sidplay		\
+		--disable-twolame		\
+		--disable-x264
 
 CFLAGS = -Wall -g -fPIC
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -35,49 +35,6 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 else
 	CFLAGS += -O2
 endif
-
-ifneq (,$(findstring arm, $(DEB_HOST_GNU_TYPE)))
-CFLAGS+=				\
-       -DGST_EXT_TIME_ANALYSIS         \
-       -DGST_EXT_TA_UNIT_MEXT          \
-       -DGST_EXT_PAD_LINK_UNCHECKED        \
-       -DGST_EXT_REDUCE_PLUGIN_NUM         \
-       -DGST_EXT_USE_PDP_NETWORK       \
-       -DGST_EXT_VOLUME_WITHOUT_LIBOIL     \
-       -DGST_EXT_AUDIOSINK_MUTE        \
-       -DEXT_AUDIO_FILTER_EFFECT       \
-       -DGST_EXT_NONBLOCKDQUE          \
-       -DGST_EXT_RENEGOTIATION         \
-       -DGST_EXT_MOBILECAMERA          \
-       -DGST_EXT_ASYNC_DEV         \
-       -DGST_EXT_AV_RECORDING          \
-       -DGST_EXT_SWITCH_CAMERA         \
-       -DGST_EXT_OVERLAYSINK_SQVGA         \
-       -DGST_EXT_FFMUX_ADD_PROPERTY        \
-       -DGST_EXT_I_LIKE_DSP            \
-       -DGST_EXT_FFMUX_ENHANCEMENT         \
-       -DGST_EXT_CAMCORDER_IPP \
-       -DGST_EXT_PROCESS_DRMCHUNK
-else
-CFLAGS+=               \
-       -DGST_EXT_TIME_ANALYSIS         \
-       -DGST_EXT_PAD_LINK_UNCHECKED        \
-       -DGST_EXT_DFBVIDEOSINK_IPP      \
-       -DGST_EXT_REDUCE_PLUGIN_NUM     \
-       -DGST_EXT_VOLUME_WITHOUT_LIBOIL     \
-       -DGST_EXT_TA_UNIT_MEXT          \
-       -DGST_EXT_AUDIOSINK_MUTE        \
-       -DGST_EXT_GST_SYNC_MODE         \
-       -DGST_EXT_NONBLOCKDQUE          \
-       -DGST_EXT_RENEGOTIATION         \
-       -DGST_EXT_MOBILECAMERA          \
-       -DGST_EXT_ASYNC_DEV             \
-       -DGST_EXT_AV_RECORDING          \
-       -DGST_EXT_SWITCH_CAMERA         \
-       -DGST_EXT_FFMUX_ADD_PROPERTY        \
-       -DGST_EXT_FFMUX_ENHANCEMENT
-endif
-       
 
 # shared library versions, option 1
 version=0.1

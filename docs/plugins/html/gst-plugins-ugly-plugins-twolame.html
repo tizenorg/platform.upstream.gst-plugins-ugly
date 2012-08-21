@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>twolame</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
 <link rel="home" href="index.html" title="GStreamer Ugly Plugins 0.10 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-ugly Elements">
 <link rel="prev" href="gst-plugins-ugly-plugins-siddec.html" title="siddec">
 <link rel="next" href="gst-plugins-ugly-plugins-synaesthesia.html" title="synaesthesia">
-<meta name="generator" content="GTK-Doc V1.17 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -52,7 +52,8 @@
   <a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GObject">GObject</a>
    +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstObject.html">GstObject</a>
          +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html">GstElement</a>
-               +----GstTwoLame
+               +----GstAudioEncoder
+                     +----GstTwoLame
 </pre>
 </div>
 <div class="refsect1">
@@ -83,64 +84,10 @@ GstTwoLame implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-ugly-plugins-twolame.description"></a><h2>Description</h2>
-<p>
-This element encodes raw integer audio into an MPEG-1 layer 2 (MP2) stream.
-</p>
-<p>
-</p>
-<div class="refsect2">
-<a name="idp10694080"></a><h3>Example pipelines</h3>
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v audiotestsrc wave<span class="gtkdoc opt">=</span>sine num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">100</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> twolame <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>sine<span class="gtkdoc opt">.</span>mp2</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Encode a test sine signal to MP2.
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v alsasrc <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> twolame bitrate<span class="gtkdoc opt">=</span><span class="number">192</span> <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>alsasrc<span class="gtkdoc opt">.</span>mp2</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Record from a sound card using ALSA and encode to MP2
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v filesrc location<span class="gtkdoc opt">=</span>music<span class="gtkdoc opt">.</span>wav <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> twolame bitrate<span class="gtkdoc opt">=</span><span class="number">192</span> <span class="gtkdoc opt">!</span> id3v2mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>music<span class="gtkdoc opt">.</span>mp2</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Transcode from a .wav file to MP2 (the id3v2mux element is optional)
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v cdda<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//5 ! audioconvert ! twolame bitrate=192 ! filesink location=track5.mp2</span></pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Encode Audio CD track 5 to MP2
-</div>
-<p>
-</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp10699120"></a><h3>Element Information</h3>
+<a name="idp10490800"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -163,7 +110,7 @@ This element encodes raw integer audio into an MPEG-1 layer 2 (MP2) stream.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp10705504"></a><h3>Element Pads</h3>
+<a name="idp10498208"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -221,7 +168,6 @@ This element encodes raw integer audio into an MPEG-1 layer 2 (MP2) stream.
 <a name="GstTwoLame-struct"></a><h3>struct GstTwoLame</h3>
 <pre class="programlisting">struct GstTwoLame;</pre>
 <p>
-Opaque data structure.
 </p>
 </div>
 </div>
@@ -337,13 +283,9 @@ Opaque data structure.
 <p>Default value: 0</p>
 </div>
 </div>
-<div class="refsect1">
-<a name="gst-plugins-ugly-plugins-twolame.see-also"></a><h2>See Also</h2>
-mad, lame
-</div>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.17</div>
+          Generated by GTK-Doc V1.18</div>
 </body>
 </html>

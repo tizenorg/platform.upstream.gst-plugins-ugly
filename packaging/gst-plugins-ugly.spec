@@ -1,11 +1,10 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
-Version:    0.10.18
-Release:    2
-Group:      TO_BE/FILLED_IN
+Version:    0.10.19
+Release:    3
+Group:      Applications/Multimedia
 License:    LGPLv2+
 Source0:    %{name}-%{version}.tar.gz
-Source1001: packaging/gst-plugins-ugly.manifest 
 Patch0 :    gst-plugins-ugly-disable-gtk-doc.patch
 BuildRequires:  gettext-tools
 BuildRequires:  which
@@ -13,7 +12,8 @@ BuildRequires:  gst-plugins-base-devel
 BuildRequires:  pkgconfig(gstreamer-0.10) 
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(liboil-0.3)
-BuildRequires:  pkgconfig(drm-service)
+BuildRequires:  pkgconfig(drm-client)
+BuildRequires:  pkgconfig(drm-trusted)
 BuildRequires:  pkgconfig(opencore-amrnb)
 BuildRequires:  pkgconfig(opencore-amrwb)
 
@@ -36,72 +36,26 @@ BuildRequires:  pkgconfig(opencore-amrwb)
 
 
 %build
-cp %{SOURCE1001} .
-%ifarch %{arm}
-CFLAGS=" %{optflags} \
-       -DGST_EXT_TIME_ANALYSIS         \
-       -DGST_EXT_TA_UNIT_MEXT          \
-       -DGST_EXT_PAD_LINK_UNCHECKED        \
-       -DGST_EXT_REDUCE_PLUGIN_NUM         \
-       -DGST_EXT_USE_PDP_NETWORK       \
-       -DGST_EXT_VOLUME_WITHOUT_LIBOIL     \
-       -DGST_EXT_AUDIOSINK_MUTE        \
-       -DEXT_AUDIO_FILTER_EFFECT       \
-       -DGST_EXT_NONBLOCKDQUE          \
-       -DGST_EXT_RENEGOTIATION         \
-       -DGST_EXT_MOBILECAMERA          \
-       -DGST_EXT_ASYNC_DEV         \
-       -DGST_EXT_AV_RECORDING          \
-       -DGST_EXT_SWITCH_CAMERA         \
-       -DGST_EXT_OVERLAYSINK_SQVGA         \
-       -DGST_EXT_FFMUX_ADD_PROPERTY        \
-       -DGST_EXT_I_LIKE_DSP            \
-       -DGST_EXT_FFMUX_ENHANCEMENT         \
-       -DGST_EXT_CAMCORDER_IPP \
-       -DGST_EXT_PROCESS_DRMCHUNK  \
-	" ; export CFLAGS
-%else
-CFLAGS=" %{optflags} \
-       -DGST_EXT_TIME_ANALYSIS         \
-       -DGST_EXT_PAD_LINK_UNCHECKED        \
-       -DGST_EXT_DFBVIDEOSINK_IPP      \
-       -DGST_EXT_REDUCE_PLUGIN_NUM     \
-       -DGST_EXT_VOLUME_WITHOUT_LIBOIL     \
-       -DGST_EXT_TA_UNIT_MEXT          \
-       -DGST_EXT_AUDIOSINK_MUTE        \
-       -DGST_EXT_GST_SYNC_MODE         \
-       -DGST_EXT_NONBLOCKDQUE          \
-       -DGST_EXT_RENEGOTIATION         \
-       -DGST_EXT_MOBILECAMERA          \
-       -DGST_EXT_ASYNC_DEV             \
-       -DGST_EXT_AV_RECORDING          \
-       -DGST_EXT_SWITCH_CAMERA         \
-       -DGST_EXT_FFMUX_ADD_PROPERTY        \
-       -DGST_EXT_FFMUX_ENHANCEMENT \
-	" ; export CFLAGS
-%endif
-
-./autogen.sh 
-%configure  --disable-static \
-	--prefix=%{_prefix} \
-	--disable-nls \
-	--with-html-dir=/tmp/dump \
-	--disable-examples \
-	--disable-dvdlpcmdec   \
-	--disable-dvdsub       \
-	--disable-iec958       \
-	--disable-mpegstream   \
-	--disable-realmedia    \
-	--disable-synaesthesia \
-	--disable-a52dec       \
-	--disable-cdio \
-	--disable-dvdread      \
-	--disable-dvdnav       \
-	--disable-mad  \
-	--disable-mpeg2dec     \
-	--disable-sidplay      \
-	--disable-twolame      \
-	--disable-x264
+./autogen.sh
+%configure --prefix=%{_prefix}\
+ --disable-static\
+ --disable-nls\
+ --with-html-dir=/tmp/dump\
+ --disable-examples\
+ --disable-dvdlpcmdec\
+ --disable-dvdsub\
+ --disable-iec958\
+ --disable-mpegstream\
+ --disable-synaesthesia\
+ --disable-a52dec\
+ --disable-cdio\
+ --disable-dvdread\
+ --disable-dvdnav\
+ --disable-mad\
+ --disable-mpeg2dec\
+ --disable-sidplay\
+ --disable-twolame\
+ --disable-x264
 
 
 
@@ -115,11 +69,11 @@ rm -rf %{buildroot}
 
 
 %files
-%manifest gst-plugins-ugly.manifest
 %defattr(-,root,root,-)
 %{_libdir}/gstreamer-0.10/libgstmpegaudioparse.so
 %{_libdir}/gstreamer-0.10/libgstasf.so
 %{_libdir}/gstreamer-0.10/libgstamrnb.so
 %{_libdir}/gstreamer-0.10/libgstamrwbdec.so
+%{_libdir}/gstreamer-0.10/libgstrmdemux.so
 %exclude %{_datadir}/gstreamer-0.10/presets/GstAmrnbEnc.prs
 

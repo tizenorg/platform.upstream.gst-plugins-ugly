@@ -2,7 +2,7 @@ Source: gst-plugins-ugly0.10
 Section: libs
 Priority: optional
 Maintainer: Seungbae Shin <seungbae.shin@samsung.com>, JongHyuk Choi <jhchoi.choi@samsung.com>
-Uploaders: Prashanth Kumar D <prashanth.kd@samsung.com>, Kishore Arepalli <kishore.a@samsung.com>, Wonhyung Cho <wh01.cho@samsung.com>, YoungHwan Ahn<younghwan_.an@samsung.com>
+Uploaders: Naveen Ch <naveen.ch@samsung.com>, Hyunseok Lee <hs7388.lee@samsung.com>, YoungHwan Ahn<younghwan_.an@samsung.com>
 Build-Depends: autotools-dev,
                cdbs (>= 0.4.20),
                debhelper (>= 5),
@@ -12,7 +12,8 @@ Build-Depends: autotools-dev,
                libgstreamer-plugins-base0.10-dev (>= 0.10.25),
                liboil0.3-dev (>= 0.3.8),
                pkg-config (>= 0.11.0),
-               drm-service-dev,
+               drm-client-dev,
+               drm-trusted-dev,
                libopencore-amrnb-dev,
                libopencore-amrwb-dev
 Standards-Version: 3.8.3
@@ -21,7 +22,8 @@ Package: gstreamer0.10-plugins-ugly
 Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends},
-         drm-service-0
+         drm-client-0,
+         drm-trusted-0
 Conflicts: gstreamer0.10-plugins-bad (<< 0.10.5.2)
 Replaces: gstreamer0.10-plugins-good (<< 0.10.9.2),
           gstreamer0.10-plugins-bad (<< 0.10.10.2)

@@ -55,12 +55,12 @@ DOC_STAMPS =				\
 
 # files generated/updated by gtkdoc-scangobj
 SCANOBJ_FILES =				\
-	$(DOC_MODULE).signals           \
+	$(DOC_MODULE).args              \
 	$(DOC_MODULE).hierarchy         \
 	$(DOC_MODULE).interfaces        \
 	$(DOC_MODULE).prerequisites     \
-	$(DOC_MODULE).types		\
-	$(DOC_MODULE).args
+	$(DOC_MODULE).signals           \
+	$(DOC_MODULE).types
 
 SCANOBJ_FILES_O =			\
 	.libs/$(DOC_MODULE)-scan.o
@@ -78,11 +78,8 @@ REPORT_FILES = \
 	$(DOC_MODULE)-undeclared.txt \
 	$(DOC_MODULE)-unused.txt
 
-# FC3 seems to need -scan.c to be part of CLEANFILES for distcheck
-# no idea why FC4 can do without
 CLEANFILES = \
 	$(SCANOBJ_FILES_O) \
-	$(DOC_MODULE)-scan.c \
 	$(REPORT_FILES) \
 	$(DOC_STAMPS) \
 	inspect-registry.xml
@@ -104,32 +101,34 @@ INSPECT_ENVIRONMENT=\
 	PKG_CONFIG_PATH="$(GST_PKG_CONFIG_PATH)" \
 	$(INSPECT_EXTRA_ENVIRONMENT)
 
-# update the element and plugin XML descriptions; store in inspect/
-inspect:
-	@-mkdir -p $(INSPECT_DIR)
-
 #### scan gobjects; done by documentation maintainer ####
 scanobj-update:
 	-rm scanobj-build.stamp
 	$(MAKE) scanobj-build.stamp
 
-# TODO: finish elite script that updates the output files of this step
-# instead of rewriting them, so that multiple maintainers can generate
-# a collective set of args and signals
-scanobj-build.stamp: $(SCANOBJ_DEPS) $(basefiles) inspect
-	@echo '*** Scanning GObjects ***'
+# gstdoc-scanobj produces 5 output files (.new)
+# scangobj-merge.py merges them into the file which we commit later
+# TODO: also merge the hierarchy
+scanobj-build.stamp: $(SCANOBJ_DEPS) $(basefiles)
+	@echo "  DOC   Introspecting gobjects"
 	@if test x"$(srcdir)" != x. ; then				\
 	    for f in $(SCANOBJ_FILES) $(SCAN_FILES);			\
 	    do								\
 	        if test -e $(srcdir)/$$f; then cp -u $(srcdir)/$$f . ; fi;	\
 	    done;							\
 	fi;								\
+	mkdir -p $(INSPECT_DIR); \
+	scanobj_options=""; \
+	if test "x$(V)" = "x1"; then \
+	    scanobj_options="--verbose"; \
+	fi; \
 	$(INSPECT_ENVIRONMENT) 					\
 	CC="$(GTKDOC_CC)" LD="$(GTKDOC_LD)"				\
 	CFLAGS="$(GTKDOC_CFLAGS) $(CFLAGS) $(WARNING_CFLAGS)"	\
 	LDFLAGS="$(GTKDOC_LIBS) $(LDFLAGS)"				\
-	$(GST_DOC_SCANOBJ) --type-init-func="gst_init(NULL,NULL)"	\
+	$(GST_DOC_SCANOBJ) $$scanobj_options --type-init-func="gst_init(NULL,NULL)"	\
 	    --module=$(DOC_MODULE) --source=$(PACKAGE) --inspect-dir=$(INSPECT_DIR) &&		\
+	    echo "  DOC   Merging introspection data" && \
 	    $(PYTHON)						\
 	    $(top_srcdir)/common/scangobj-merge.py $(DOC_MODULE);	\
 	if test x"$(srcdir)" != x. ; then				\
@@ -145,91 +144,102 @@ $(DOC_MODULE)-decl.txt $(SCANOBJ_FILES) $(SCANOBJ_FILES_O): scan-build.stamp
 
 ### scan headers; done on every build ###
 scan-build.stamp: $(HFILE_GLOB) $(EXTRA_HFILES) $(basefiles) scanobj-build.stamp
-	@echo '*** Scanning header files ***'
-	gtkdoc-scan							\
-	    $(SCAN_OPTIONS) $(EXTRA_HFILES)				\
-	    --module=$(DOC_MODULE)					\
-	    --source-dir=$(DOC_SOURCE_DIR)				\
-	    --ignore-headers="$(IGNORE_HFILES)";			\
-	touch scan-build.stamp
-
-#### update templates; done on every build ####
-
-### FIXME: make this error out again when docs are fixed for 0.X
-# in a non-srcdir build, we need to copy files from the previous step
-# and the files from previous runs of this step
-tmpl-build.stamp: $(DOC_MODULE)-decl.txt $(SCANOBJ_FILES) $(DOC_MODULE)-sections.txt $(DOC_OVERRIDES)
-	@echo '*** Rebuilding template files ***'
+	@echo '  DOC   Scanning header files'
 	@if test x"$(srcdir)" != x. ; then				\
 	    for f in $(SCANOBJ_FILES) $(SCAN_FILES);			\
 	    do								\
 	        if test -e $(srcdir)/$$f; then cp -u $(srcdir)/$$f . ; fi;	\
 	    done;							\
 	fi
-	gtkdoc-mktmpl --module=$(DOC_MODULE) | tee tmpl-build.log
-	$(PYTHON) \
+	@_source_dir='' ;						\
+	for i in $(DOC_SOURCE_DIR) ; do					\
+	    _source_dir="$${_source_dir} --source-dir=$$i" ;	        \
+	done ;							        \
+	gtkdoc-scan							\
+	    $(SCAN_OPTIONS) $(EXTRA_HFILES)				\
+	    --module=$(DOC_MODULE)					\
+	    $${_source_dir}             				\
+	    --ignore-headers="$(IGNORE_HFILES)";			\
+	touch scan-build.stamp
+
+#### update templates; done on every build ####
+
+# in a non-srcdir build, we need to copy files from the previous step
+# and the files from previous runs of this step
+tmpl-build.stamp: $(DOC_MODULE)-decl.txt $(SCANOBJ_FILES) $(DOC_MODULE)-sections.txt $(DOC_OVERRIDES)
+	@echo '  DOC   Rebuilding template files'
+	@if test x"$(srcdir)" != x. ; then				\
+	    for f in $(SCANOBJ_FILES) $(SCAN_FILES);			\
+	    do								\
+	        if test -e $(srcdir)/$$f; then cp -u $(srcdir)/$$f . ; fi;	\
+	    done;							\
+	fi
+	@gtkdoc-mktmpl --module=$(DOC_MODULE)
+	@$(PYTHON) \
 		$(top_srcdir)/common/mangle-tmpl.py $(srcdir)/$(INSPECT_DIR) tmpl
-	@rm -f tmpl-build.log
-	touch tmpl-build.stamp
+	@touch tmpl-build.stamp
 
 tmpl.stamp: tmpl-build.stamp
 	@true
 
-#### build xml; done on every build ####
+#### xml ####
 
-### FIXME: make this error out again when docs are fixed for 0.9
 sgml-build.stamp: tmpl.stamp scan-build.stamp $(CFILE_GLOB) $(top_srcdir)/common/plugins.xsl $(expand_content_files)
-	@echo '*** Building XML ***'
+	@echo '  DOC   Building XML'
 	@-mkdir -p xml
 	@for a in $(srcdir)/$(INSPECT_DIR)/*.xml; do \
 	    xsltproc --stringparam module $(MODULE) \
 		$(top_srcdir)/common/plugins.xsl $$a > xml/`basename $$a`; done
 	@for f in $(EXAMPLE_CFILES); do \
 		$(PYTHON) $(top_srcdir)/common/c-to-xml.py $$f > xml/element-`basename $$f .c`.xml; done
-	gtkdoc-mkdb \
+	@gtkdoc-mkdb \
 		--module=$(DOC_MODULE) \
 		--source-dir=$(DOC_SOURCE_DIR) \
 		 --expand-content-files="$(expand_content_files)" \
 		--main-sgml-file=$(srcdir)/$(DOC_MAIN_SGML_FILE) \
 		--output-format=xml \
 		--ignore-files="$(IGNORE_HFILES) $(IGNORE_CFILES)" \
-		$(MKDB_OPTIONS) \
-		| tee sgml-build.log
-	@if grep "WARNING:" sgml-build.log > /dev/null; then true; fi # exit 1; fi
-	cp ../version.entities xml
-	rm sgml-build.log
-	touch sgml-build.stamp
+		$(MKDB_OPTIONS)
+	@cp ../version.entities xml
+	@touch sgml-build.stamp
 
 sgml.stamp: sgml-build.stamp
 	@true
 
-#### build html; done on every step ####
+#### html ####
 
 html-build.stamp: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
-	@echo '*** Building HTML ***'
-	if test -d html; then rm -rf html; fi
-	mkdir html
-	cp $(srcdir)/$(DOC_MAIN_SGML_FILE) html
+	@echo '  DOC   Building HTML'
+	@rm -rf html
+	@mkdir html
+	@cp $(srcdir)/$(DOC_MAIN_SGML_FILE) html
 	@for f in $(content_files); do cp $(srcdir)/$$f html; done
-	cp -pr xml html
-	cp ../version.entities html
-	cd html && gtkdoc-mkhtml $(DOC_MODULE) $(DOC_MAIN_SGML_FILE)
-	mv html/index.sgml html/index.sgml.bak
-	$(SED) "s/ href=\"$(DOC_MODULE)\// href=\"$(DOC_MODULE)-@GST_MAJORMINOR@\//g" html/index.sgml.bak >html/index.sgml
-	rm -f html/index.sgml.bak
-	rm -f html/$(DOC_MAIN_SGML_FILE)
-	rm -rf html/xml
-	rm -f html/version.entities
-	test "x$(HTML_IMAGES)" = "x" || for i in "" $(HTML_IMAGES) ; do \
+	@cp -pr xml html
+	@cp ../version.entities html
+	@mkhtml_options=""; \
+	gtkdoc-mkhtml 2>&1 --help | grep  >/dev/null "\-\-verbose"; \
+	if test "$(?)" = "0"; then \
+	  if test "x$(V)" = "x1"; then \
+	    mkhtml_options="$$mkhtml_options --verbose"; \
+	  fi; \
+	fi; \
+	cd html && gtkdoc-mkhtml $$mkhtml_options $(DOC_MODULE) $(DOC_MAIN_SGML_FILE)
+	@mv html/index.sgml html/index.sgml.bak
+	@$(SED) "s/ href=\"$(DOC_MODULE)\// href=\"$(DOC_MODULE)-@GST_MAJORMINOR@\//g" html/index.sgml.bak >html/index.sgml
+	@rm -f html/index.sgml.bak
+	@rm -f html/$(DOC_MAIN_SGML_FILE)
+	@rm -rf html/xml
+	@rm -f html/version.entities
+	@test "x$(HTML_IMAGES)" = "x" || for i in "" $(HTML_IMAGES) ; do \
 	    if test "$$i" != ""; then cp $(srcdir)/$$i html ; fi; done
-	@echo '-- Fixing Crossreferences'
-	gtkdoc-fixxref --module=$(DOC_MODULE) --module-dir=html --html-dir=$(HTML_DIR) $(FIXXREF_OPTIONS)
-	touch html-build.stamp
+	@echo '  DOC   Fixing cross-references'
+	@gtkdoc-fixxref --module=$(DOC_MODULE) --module-dir=html --html-dir=$(HTML_DIR) $(FIXXREF_OPTIONS)
+	@touch html-build.stamp
 
 clean-local-gtkdoc:
-	rm -rf xml tmpl html
+	@rm -rf xml tmpl html
 # clean files copied for nonsrcdir templates build
-	if test x"$(srcdir)" != x. ; then \
+	@if test x"$(srcdir)" != x. ; then \
 	    rm -rf $(SCANOBJ_FILES) $(SCAN_FILES) $(REPORT_FILES) \
 	        $(MAINTAINER_DOC_STAMPS); \
 	fi
@@ -239,16 +249,16 @@ clean-local-gtkdoc:
 endif
 
 clean-local: clean-local-gtkdoc
-	rm -f *~ *.bak
-	rm -rf .libs
+	@rm -f *~ *.bak
+	@rm -rf .libs
 
 distclean-local:
-	rm -f $(REPORT_FILES) \
+	@rm -f $(REPORT_FILES) \
 	        $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt
-	rm -rf tmpl/*.sgml.bak
-	rm -f $(DOC_MODULE).hierarchy
-	rm -f *.stamp || true
-	if test "$(abs_srcdir)" != "$(abs_builddir)" ; then \
+	@rm -rf tmpl/*.sgml.bak
+	@rm -f $(DOC_MODULE).hierarchy
+	@rm -f *.stamp || true
+	@if test "$(abs_srcdir)" != "$(abs_builddir)" ; then \
 	    rm -f $(DOC_MODULE)-docs.sgml ; \
 	    rm -f $(DOC_MODULE).types ; \
 	    rm -f $(DOC_MODULE).interfaces ; \
@@ -258,7 +268,7 @@ distclean-local:
 	    rm -rf tmpl/*.sgml ; \
 	    rm -rf $(INSPECT_DIR); \
 	fi
-	rm -rf *.o
+	@rm -rf *.o
 
 MAINTAINERCLEANFILES = $(MAINTAINER_DOC_STAMPS)
 
@@ -280,9 +290,7 @@ install-data-local:
 	      $(INSTALL_DATA) $$i $(DESTDIR)$(TARGET_DIR); \
 	    done; \
 	  fi; \
-	  echo '-- Installing $(builddir)/html/$(DOC_MODULE).devhelp' ; \
-	  $(INSTALL_DATA) $(builddir)/html/$(DOC_MODULE).devhelp \
-	    $(DESTDIR)$(TARGET_DIR)/$(DOC_MODULE)-@GST_MAJORMINOR@.devhelp; \
+	  echo '-- Installing $(builddir)/html/$(DOC_MODULE).devhelp2' ; \
 	  if test -e $(builddir)/html/$(DOC_MODULE).devhelp2; then \
 	            $(INSTALL_DATA) $(builddir)/html/$(DOC_MODULE).devhelp2 \
 	            $(DESTDIR)$(TARGET_DIR)/$(DOC_MODULE)-@GST_MAJORMINOR@.devhelp2; \

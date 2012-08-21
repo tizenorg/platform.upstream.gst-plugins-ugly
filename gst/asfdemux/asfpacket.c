@@ -29,6 +29,10 @@
 #include <gst/gstinfo.h>
 #include <string.h>
 
+#ifdef ASFDEMUX_ENABLE_PLAYREADY
+#include "drm_util_pr.h"
+#endif /* ASFDEMUX_ENABLE_PLAYREADY */
+
 /* we are unlikely to deal with lengths > 2GB here any time soon, so just
  * return a signed int and use that for error reporting */
 gint
@@ -255,10 +259,11 @@ asf_payload_parse_replicated_data_extensions (AsfStream * stream,
               ext->len);
         }
         break;
+#ifdef ASFDEMUX_ENABLE_PLAYREADY
       case ASF_PAYLOAD_EXTENSION_SYSTEM_ENCRYPTION_SAMPLE_ID:
     	  	  GST_DEBUG ("ASF_PAYLOAD_EXTENSION_SYSTEM_ENCRYPTION_SAMPLE_ID");
               break;
-
+#endif /* ASFDEMUX_ENABLE_PLAYREADY */
       default:
         GST_WARNING ("UNKNOWN PAYLOAD EXTENSION !");
         break;
@@ -383,25 +388,16 @@ gst_asf_demux_parse_payload (GstASFDemux * demux, AsfPacket * packet,
 
     GST_LOG_OBJECT (demux, "payload length: %u", payload_len);
 
-    if ((stream = gst_asf_demux_get_stream (demux, stream_num))) {
+    if ((stream = gst_asf_demux_get_stream (demux, stream_num))
+        && payload_len) {
       payload.buf = asf_packet_create_payload_buffer (packet, p_data, p_size,
           payload_len);
-
+#ifdef ASFDEMUX_ENABLE_PLAYREADY
       /* PlayReady Decryption */
       if (demux->hFileHandle) {
-    	  DRM_RESULT drm_result = drm_svc_pr_decrypt_payload (demux->hFileHandle,
-																							  GST_BUFFER_DATA(payload.buf),
-																							  GST_BUFFER_SIZE(payload.buf),
-																							  (unsigned char*)payload.rep_data,
-																							  payload.rep_data_len,
-																							  payload.mo_offset);
-		  if(drm_result != DRM_RESULT_SUCCESS) {
-			  GST_ERROR_OBJECT (demux, "Error in drm_svc_pr_decrypt_payload() [%d][%d]", drm_result, GST_BUFFER_SIZE(payload.buf));
-		  } else {
-			  GST_DEBUG_OBJECT (demux, "drm_svc_pr_decrypt_payload() success!!!!");
-		  }
+		drm_util_pr_decrypt_payload (demux->hFileHandle, &payload);
       }
-
+#endif /* ASFDEMUX_ENABLE_PLAYREADY */
       /* n-th fragment of a fragmented media object? */
       if (payload.mo_offset != 0) {
         AsfPayload *prev;

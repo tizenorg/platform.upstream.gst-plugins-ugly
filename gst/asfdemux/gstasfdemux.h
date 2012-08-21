@@ -26,7 +26,10 @@
 
 #include "asfheaders.h"
 
-#include <drm-service.h>
+#ifdef ASFDEMUX_ENABLE_PLAYREADY
+#include <drm_trusted_client.h>
+#include <drm_trusted_client_types.h>
+#endif /* ASFDEMUX_ENABLE_PLAYREADY */
 
 G_BEGIN_DECLS
   
@@ -88,27 +91,31 @@ typedef struct
 #ifdef ASFDEMUX_MODIFICATION
 typedef struct
 {
-  guint32 			samples_bw_keyframes; /* no.of frames between two consecutive keyframes */
-  guint32 			samples_to_show_bw_keyframes; /* no.of frames to show between two consecutive key frames = samples_bw_keyframes/rate */
-  guint64 			avg_duration_bet_2_keyframes;
-  
-  GstClockTime  	start_ts;
-  GstClockTime	tp_preroll;
-  GstClockTime	current_packet_ts;
-
-  gboolean 		is_eos;
-  guint64			mo_len_type;
-
-  guint32 			prev_kpacket;
-  guint32 			next_kpacket;
-  guint32			current_kpacket;
-
-  guint			prev_keyframe;
-  guint 			current_frame;
-
-  guint32 audio_frame_count;
-
+  guint32           show_samples; /* no.of frames to show between two consecutive key frames = samples_bw_keyframes/rate */
+  guint64           kpacket_dur_diff;
+  GstClockTime      start_ts;
+  GstClockTime      tp_preroll;
+  GstClockTime      avg_dur;
+  gboolean          is_eos;
+  guint64           mo_len_type;
+  guint32           prev_kpacket;
+  guint32           next_kpacket;
+  guint32           cur_kpacket;
+  guint             prev_keyframe;
+  guint             current_frame;
+  GstClockTime      next_keyframe_ts;
+  GstClockTime      cur_keyframe_ts;
+  gboolean          first_video_push;
+  gboolean          resume_nrl_play;
+  gboolean          first_payload;
 }AsfTrickplayInfo;
+
+typedef struct
+{
+  GstClockTime key_time;
+  gint key_packet;
+  gint speed_count;
+}AsfKeyPacketInfo;
 #endif
 
 typedef struct
@@ -142,22 +149,6 @@ typedef struct
   /* extended stream properties (optional) */
   AsfStreamExtProps  ext_props;
 
-#if 0
-  GQueue *queue;
-  /* for  0<rate<64 */
-  gint32 next_kindex;
-  guint32 prev_kindex;
-  guint32 total_samples_bet_2_keyframes;
-  guint64 avg_duration_bet_2_keyframes;
-  guint32 samples_to_show_bet_kframes, current_index;
-  GstClockTime  prev_ts;
-  GstClockTime  avg_duration;	  
-  GstClockTime  start_ts;
-  GstClockTime  end_ts;	
-  gboolean is_available;
-  guint32 audio_frame_count;
-  gboolean is_eos;	
-#endif
 } AsfStream;
 
 typedef enum {
@@ -204,7 +195,7 @@ struct _GstASFDemux {
   guint64            num_packets;  /* total number of data packets, or 0       */
   gint64             packet;       /* current packet                           */
 #ifdef LAST_STOP_SEGMENT
-  gint64		packet_to_stop;
+  gint64             packet_to_stop;
 #endif
   guint              speed_packets; /* Known number of packets to get in one go*/
 
@@ -269,11 +260,15 @@ struct _GstASFDemux {
   gboolean             firstVidBufSent;
 
 #ifdef ASFDEMUX_MODIFICATION
-  guint32			seek_idx; 
+  guint32              seek_idx;
+  GstClockTime         stop_ts;
+  GstClockTime         current_ts;
   AsfTrickplayInfo trickplay_info;
 #endif
 
-  DRM_PLAYREADY_APP_HANDLE hFileHandle;
+#ifdef ASFDEMUX_ENABLE_PLAYREADY
+  DRM_DECRYPT_HANDLE hFileHandle;
+#endif /* ASFDEMUX_ENABLE_PLAYREADY */
 
 #ifdef CODEC_ENTRY
   /* Codec List Object */

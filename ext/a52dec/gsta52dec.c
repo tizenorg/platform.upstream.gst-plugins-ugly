@@ -21,7 +21,7 @@
  * SECTION:element-a52dec
  *
  * Dolby Digital (AC-3) audio decoder.
- * 
+ *
  * <refsect2>
  * <title>Example launch line</title>
  * |[
@@ -128,10 +128,8 @@ gst_a52dec_base_init (gpointer g_class)
 {
   GstElementClass *element_class = GST_ELEMENT_CLASS (g_class);
 
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&sink_factory));
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&src_factory));
+  gst_element_class_add_static_pad_template (element_class, &sink_factory);
+  gst_element_class_add_static_pad_template (element_class, &src_factory);
   gst_element_class_set_details_simple (element_class,
       "ATSC A/52 audio decoder", "Codec/Decoder/Audio",
       "Decodes ATSC A/52 encoded audio streams",
@@ -173,7 +171,7 @@ gst_a52dec_class_init (GstA52DecClass * klass)
    *
    * Force a particular output channel configuration from the decoder. By default,
    * the channel downmix (if any) is chosen automatically based on the downstream
-   * capabilities of the pipeline. 
+   * capabilities of the pipeline.
    */
   g_object_class_install_property (G_OBJECT_CLASS (klass), ARG_MODE,
       g_param_spec_enum ("mode", "Decoder Mode", "Decoding Mode (default 3f2r)",
@@ -226,10 +224,14 @@ gst_a52dec_init (GstA52Dec * a52dec, GstA52DecClass * g_class)
   gst_element_add_pad (GST_ELEMENT (a52dec), a52dec->sinkpad);
 
   a52dec->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
+  gst_pad_use_fixed_caps (a52dec->srcpad);
   gst_element_add_pad (GST_ELEMENT (a52dec), a52dec->srcpad);
 
   a52dec->request_channels = A52_CHANNEL;
   a52dec->dynamic_range_compression = FALSE;
+
+  a52dec->state = NULL;
+  a52dec->samples = NULL;
 
   gst_segment_init (&a52dec->segment, GST_FORMAT_UNDEFINED);
 }
@@ -392,6 +394,7 @@ gst_a52dec_push (GstA52Dec * a52dec,
           samples[c * 256 + n];
     }
   }
+
   GST_BUFFER_TIMESTAMP (buf) = timestamp;
   GST_BUFFER_DURATION (buf) = 256 * GST_SECOND / a52dec->sample_rate;
 
@@ -568,8 +571,8 @@ gst_a52dec_handle_frame (GstA52Dec * a52dec, guint8 * data,
   }
 
   /* If we haven't had an explicit number of channels chosen through properties
-   * at this point, choose what to downmix to now, based on what the peer will 
-   * accept - this allows a52dec to do downmixing in preference to a 
+   * at this point, choose what to downmix to now, based on what the peer will
+   * accept - this allows a52dec to do downmixing in preference to a
    * downstream element such as audioconvert.
    */
   if (a52dec->request_channels != A52_CHANNEL) {
@@ -593,13 +596,13 @@ gst_a52dec_handle_frame (GstA52Dec * a52dec, guint8 * data,
         A52_3F2R | A52_LFE,
       };
 
-      /* Prefer the original number of channels, but fixate to something 
+      /* Prefer the original number of channels, but fixate to something
        * preferred (first in the caps) downstream if possible.
        */
       gst_structure_fixate_field_nearest_int (structure, "channels",
           flags ? gst_a52dec_channels (flags, NULL) : 6);
-      gst_structure_get_int (structure, "channels", &channels);
-      if (channels <= 6)
+      if (gst_structure_get_int (structure, "channels", &channels)
+          && channels <= 6)
         flags = a52_channels[channels - 1];
       else
         flags = a52_channels[5];
@@ -783,10 +786,10 @@ gst_a52dec_chain_raw (GstPad * pad, GstBuffer * buf)
   if (!a52dec->sent_segment) {
     GstSegment segment;
 
-    /* Create a basic segment. Usually, we'll get a new-segment sent by 
+    /* Create a basic segment. Usually, we'll get a new-segment sent by
      * another element that will know more information (a demuxer). If we're
      * just looking at a raw AC3 stream, we won't - so we need to send one
-     * here, but we don't know much info, so just send a minimal TIME 
+     * here, but we don't know much info, so just send a minimal TIME
      * new-segment event
      */
     gst_segment_init (&segment, GST_FORMAT_TIME);
@@ -872,6 +875,12 @@ gst_a52dec_change_state (GstElement * element, GstStateChange transition)
 
       klass = GST_A52DEC_CLASS (G_OBJECT_GET_CLASS (a52dec));
       a52dec->state = a52_init (klass->a52_cpuflags);
+
+      if (!a52dec->state) {
+        GST_ELEMENT_ERROR (GST_ELEMENT (a52dec), STREAM, DECODE, (NULL),
+            ("Failed to initialize a52 state"));
+        ret = GST_STATE_CHANGE_FAILURE;
+      }
       break;
     }
     case GST_STATE_CHANGE_READY_TO_PAUSED:
@@ -907,8 +916,10 @@ gst_a52dec_change_state (GstElement * element, GstStateChange transition)
       clear_queued (a52dec);
       break;
     case GST_STATE_CHANGE_READY_TO_NULL:
-      a52_free (a52dec->state);
-      a52dec->state = NULL;
+      if (a52dec->state) {
+        a52_free (a52dec->state);
+        a52dec->state = NULL;
+      }
       break;
     default:
       break;

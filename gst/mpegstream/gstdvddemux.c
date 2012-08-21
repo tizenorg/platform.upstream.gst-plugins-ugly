@@ -188,8 +188,8 @@ gst_dvd_demux_base_init (gpointer klass)
   mpeg_parse_class->parse_packhead = gst_dvd_demux_parse_packhead;
 
   /* sink pad */
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&sink_template));
+  gst_element_class_add_static_pad_template (element_class,
+      &sink_template);
 
   demux_class->audio_template = gst_static_pad_template_get (&audio_template);
 
@@ -422,16 +422,22 @@ gst_dvd_demux_handle_dvd_event (GstDVDDemux * dvd_demux, GstEvent * event)
     }
 
     /* subtitle */
-    for (;;) {
-      t = g_strdup_printf ("subtitle-%d-language", num_substreams);
+    for (n = 0; n < GST_DVD_DEMUX_NUM_SUBPICTURE_STREAMS; n++) {
+      t = g_strdup_printf ("subtitle-%d-language", n);
       if (!gst_structure_get_value (structure, t)) {
         g_free (t);
-        break;
+        continue;
       }
       g_free (t);
-      CLASS (dvd_demux)->get_subpicture_stream (mpeg_demux,
-          num_substreams++, GST_DVD_DEMUX_SUBP_DVD, NULL);
+      num_substreams = n + 1;
     }
+
+    /* now we have a maximum,
+     * and can also fill empty slots in case of cranky DVD */
+    for (n = 0; n < num_substreams; n++)
+      CLASS (dvd_demux)->get_subpicture_stream (mpeg_demux,
+          n, GST_DVD_DEMUX_SUBP_DVD, NULL);
+
     GST_DEBUG_OBJECT (dvd_demux,
         "Created 1 video stream, %d audio streams and %d subpicture streams "
         "based on DVD lang codes event; now signalling no-more-pads",

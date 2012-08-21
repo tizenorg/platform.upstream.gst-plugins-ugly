@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>lame</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
 <link rel="home" href="index.html" title="GStreamer Ugly Plugins 0.10 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-ugly Elements">
 <link rel="prev" href="gst-plugins-ugly-plugins-cdiocddasrc.html" title="cdiocddasrc">
 <link rel="next" href="gst-plugins-ugly-plugins-lamemp3enc.html" title="lamemp3enc">
-<meta name="generator" content="GTK-Doc V1.17 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -52,7 +52,8 @@
   <a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GObject">GObject</a>
    +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstObject.html">GstObject</a>
          +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html">GstElement</a>
-               +----GstLame
+               +----GstAudioEncoder
+                     +----GstLame
 </pre>
 </div>
 <div class="refsect1">
@@ -101,113 +102,10 @@ GstLame implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-ugly-plugins-lame.description"></a><h2>Description</h2>
-<p>
-This element encodes raw integer audio into an MPEG-1 layer 3 (MP3) stream.
-Note that <a class="ulink" href="http://en.wikipedia.org/wiki/MP3" target="_top">MP3</a> is not
-a free format, there are licensing and patent issues to take into
-consideration. See <a class="ulink" href="http://www.vorbis.com/" target="_top">Ogg/Vorbis</a>
-for a royalty free (and often higher quality) alternative.
-</p>
-<p>
-</p>
-<div class="refsect2">
-<a name="idp9174272"></a><h3>Note</h3>
-This element is deprecated, use the lamemp3enc element instead
-which provides a much simpler interface and results in better MP3 files.
-</div>
-<p>
-</p>
-<p>
-</p>
-<div class="refsect2">
-<a name="idp9175744"></a><h3>Output sample rate</h3>
-If no fixed output sample rate is negotiated on the element's src pad,
-the element will choose an optimal sample rate to resample to internally.
-For example, a 16-bit 44.1 KHz mono audio stream encoded at 48 kbit will
-get resampled to 32 KHz.  Use filter caps on the src pad to force a
-particular sample rate.
-</div>
-<p>
-</p>
-<hr>
-<div class="refsect2">
-<a name="idp9176928"></a><h3>Writing metadata (tags)</h3>
-Whilst the lame encoder element does claim to implement the GstTagSetter
-interface, it does so only for backwards compatibility reasons. Tag writing
-has been removed from lame. Use external elements like id3v2mux or apev2mux
-to add tags to your MP3 streams. The same goes for XING headers: use the
-xingmux element to add XING headers to your VBR mp3 file.
-</div>
-<p>
-</p>
-<hr>
-<div class="refsect2">
-<a name="idp9178160"></a><h3>Example pipelines</h3>
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v audiotestsrc wave<span class="gtkdoc opt">=</span>sine num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">100</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> lame <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>sine<span class="gtkdoc opt">.</span>mp3</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Encode a test sine signal to MP3.
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v alsasrc <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> lame bitrate<span class="gtkdoc opt">=</span><span class="number">192</span> <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>alsasrc<span class="gtkdoc opt">.</span>mp3</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Record from a sound card using ALSA and encode to MP3
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v filesrc location<span class="gtkdoc opt">=</span>music<span class="gtkdoc opt">.</span>wav <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> lame bitrate<span class="gtkdoc opt">=</span><span class="number">192</span> <span class="gtkdoc opt">!</span> id3v2mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>music<span class="gtkdoc opt">.</span>mp3</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Transcode from a .wav file to MP3 (the id3v2mux element is optional)
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v cdda<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//5 ! audioconvert ! lame bitrate=192 ! filesink location=track5.mp3</span></pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Encode Audio CD track 5 to MP3
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v audiotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">10</span> <span class="gtkdoc opt">!</span> audio<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>raw<span class="gtkdoc opt">-</span><span class="gtkdoc kwb">int</span><span class="gtkdoc opt">,</span>rate<span class="gtkdoc opt">=</span><span class="number">44100</span><span class="gtkdoc opt">,</span>channels<span class="gtkdoc opt">=</span><span class="number">1</span> <span class="gtkdoc opt">!</span> lame bitrate<span class="gtkdoc opt">=</span><span class="number">48</span> mode<span class="gtkdoc opt">=</span><span class="number">3</span> <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>mp3</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- Encode to a fixed sample rate
-</div>
-<p>
-</p>
-<p>
-Last reviewed on 2007-07-24 (0.10.7)
-</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp9185184"></a><h3>Element Information</h3>
+<a name="idp9568016"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -230,7 +128,7 @@ Last reviewed on 2007-07-24 (0.10.7)
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp9192592"></a><h3>Element Pads</h3>
+<a name="idp9575424"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -284,7 +182,6 @@ Last reviewed on 2007-07-24 (0.10.7)
 <a name="GstLame-struct"></a><h3>struct GstLame</h3>
 <pre class="programlisting">struct GstLame;</pre>
 <p>
-Opaque data structure.
 </p>
 </div>
 </div>
@@ -532,13 +429,9 @@ Opaque data structure.
 <p>Default value: FALSE</p>
 </div>
 </div>
-<div class="refsect1">
-<a name="gst-plugins-ugly-plugins-lame.see-also"></a><h2>See Also</h2>
-lamemp3enc, mad, vorbisenc
-</div>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.17</div>
+          Generated by GTK-Doc V1.18</div>
 </body>
 </html>

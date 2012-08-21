@@ -22,6 +22,7 @@
 
 G_BEGIN_DECLS
 
+#define ASFDEMUX_ENABLE_PLAYREADY
 typedef struct {
   guint32 v1;
   guint32 v2;
@@ -88,8 +89,9 @@ typedef enum {
   ASF_PAYLOAD_EXTENSION_DURATION,
   ASF_PAYLOAD_EXTENSION_SYSTEM_CONTENT,
   ASF_PAYLOAD_EXTENSION_SYSTEM_PIXEL_ASPECT_RATIO,
+#ifdef ASFDEMUX_ENABLE_PLAYREADY
   ASF_PAYLOAD_EXTENSION_SYSTEM_ENCRYPTION_SAMPLE_ID
-
+#endif
 } AsfPayloadExtensionID;
 
 extern const ASFGuidHash asf_payload_ext_guids[];

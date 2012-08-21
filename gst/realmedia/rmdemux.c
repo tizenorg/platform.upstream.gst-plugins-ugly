@@ -28,6 +28,10 @@
 #  include "config.h"
 #endif
 
+/* FIXME 0.11: suppress warnings for deprecated API such as GStaticRecMutex
+ * with newer GLib versions (>= 2.31.0) */
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
+
 #include "rmdemux.h"
 #include "rmutils.h"
 
@@ -196,12 +200,12 @@ gst_rmdemux_base_init (GstRMDemuxClass * klass)
 {
   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
 
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&gst_rmdemux_sink_template));
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&gst_rmdemux_videosrc_template));
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&gst_rmdemux_audiosrc_template));
+  gst_element_class_add_static_pad_template (element_class,
+      &gst_rmdemux_sink_template);
+  gst_element_class_add_static_pad_template (element_class,
+      &gst_rmdemux_videosrc_template);
+  gst_element_class_add_static_pad_template (element_class,
+      &gst_rmdemux_audiosrc_template);
   gst_element_class_set_details_simple (element_class, "RealMedia Demuxer",
       "Codec/Demuxer",
       "Demultiplex a RealMedia file into audio and video streams",
@@ -399,9 +403,6 @@ find_seek_offset_bytes (GstRMDemux * rmdemux, guint target)
   int i;
   GSList *cur;
   gboolean ret = FALSE;
-
-  if (target < 0)
-    return FALSE;
 
   for (cur = rmdemux->streams; cur; cur = cur->next) {
     GstRMDemuxStream *stream = cur->data;
@@ -709,6 +710,11 @@ gst_rmdemux_reset (GstRMDemux * rmdemux)
   rmdemux->streams = NULL;
   rmdemux->n_audio_streams = 0;
   rmdemux->n_video_streams = 0;
+
+  if (rmdemux->pending_tags != NULL) {
+    gst_tag_list_free (rmdemux->pending_tags);
+    rmdemux->pending_tags = NULL;
+  }
 
   gst_adapter_clear (rmdemux->adapter);
   rmdemux->state = RMDEMUX_STATE_HEADER;
@@ -1864,9 +1870,11 @@ gst_rmdemux_parse_cont (GstRMDemux * rmdemux, const guint8 * data, int length)
   GstTagList *tags;
 
   tags = gst_rm_utils_read_tags (data, length, gst_rm_utils_read_string16);
-  if (tags) {
-    gst_element_found_tags (GST_ELEMENT (rmdemux), tags);
-  }
+
+  GST_LOG_OBJECT (rmdemux, "tags: %" GST_PTR_FORMAT, tags);
+
+  rmdemux->pending_tags =
+      gst_tag_list_merge (rmdemux->pending_tags, tags, GST_TAG_MERGE_APPEND);
 }
 
 static GstFlowReturn
@@ -2607,6 +2615,11 @@ gst_rmdemux_parse_packet (GstRMDemux * rmdemux, GstBuffer * in, guint16 version)
 
     gst_rmdemux_send_event (rmdemux, event);
     rmdemux->need_newsegment = FALSE;
+
+    if (rmdemux->pending_tags != NULL) {
+      gst_element_found_tags (GST_ELEMENT (rmdemux), rmdemux->pending_tags);
+      rmdemux->pending_tags = NULL;
+    }
   }
 
   if (stream->pending_tags != NULL) {

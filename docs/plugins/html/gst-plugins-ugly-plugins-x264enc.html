@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>x264enc</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
 <link rel="home" href="index.html" title="GStreamer Ugly Plugins 0.10 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-ugly Elements">
 <link rel="prev" href="gst-plugins-ugly-plugins-synaesthesia.html" title="synaesthesia">
 <link rel="next" href="gst-plugins-ugly-plugins-xingmux.html" title="xingmux">
-<meta name="generator" content="GTK-Doc V1.17 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -107,121 +107,10 @@ GstX264Enc implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-ugly-plugins-x264enc.description"></a><h2>Description</h2>
-<p>
-This element encodes raw video into H264 compressed data,
-also otherwise known as MPEG-4 AVC (Advanced Video Codec).
-</p>
-<p>
-The <a class="link" href="gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--pass" title='The "pass" property'><span class="type">"pass"</span></a> property controls the type of encoding.  In case of Constant
-Bitrate Encoding (actually ABR), the <a class="link" href="gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--bitrate" title='The "bitrate" property'><span class="type">"bitrate"</span></a> will determine the quality
-of the encoding.  This will similarly be the case if this target bitrate
-is to obtained in multiple (2 or 3) pass encoding.
-Alternatively, one may choose to perform Constant Quantizer or Quality encoding,
-in which case the <a class="link" href="gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--quantizer" title='The "quantizer" property'><span class="type">"quantizer"</span></a> property controls much of the outcome, in that case <a class="link" href="gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--bitrate" title='The "bitrate" property'><span class="type">"bitrate"</span></a> is the maximum bitrate.
-</p>
-<p>
-The H264 profile that is eventually used depends on a few settings.
-If <a class="link" href="gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--dct8x8" title='The "dct8x8" property'><span class="type">"dct8x8"</span></a> is enabled, then High profile is used.
-Otherwise, if <a class="link" href="gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--cabac" title='The "cabac" property'><span class="type">"cabac"</span></a> entropy coding is enabled or <a class="link" href="gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--bframes" title='The "bframes" property'><span class="type">"bframes"</span></a>
-are allowed, then Main Profile is in effect, and otherwise Baseline profile
-applies.  No profile is imposed by default, which is fine for most software
-players and settings, but in some cases (e.g. hardware platforms) a more
-restricted profile/level may be necessary.
-</p>
-<p>
-If a preset/tuning are specified then these will define the default values and
-the property defaults will be ignored. After this the option-string property is
-applied, followed by the user-set properties, fast first pass restrictions and
-finally the profile restrictions.
-</p>
-<p>
-</p>
-<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
-<h3 class="title">Note</h3>Some settings, including the default settings, may lead to quite
-some latency (i.e. frame buffering) in the encoder. This may cause problems
-with pipeline stalling in non-trivial pipelines, because the encoder latency
-is often considerably higher than the default size of a simple queue
-element. Such problems are caused by one of the queues in the other
-non-x264enc streams/branches filling up and blocking upstream. They can
-be fixed by relaxing the default time/size/buffer limits on the queue
-elements in the non-x264 branches, or using a (single) multiqueue element
-for all branches. Also see the last example below.
-</div>
-<p>
-</p>
-<p>
-</p>
-<div class="refsect2">
-<a name="idp10872336"></a><h3>Example pipeline</h3>
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1
-2</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">1000</span> <span class="gtkdoc opt">!</span> x264enc qp<span class="gtkdoc opt">-</span>min<span class="gtkdoc opt">=</span><span class="number">18</span> <span class="gtkdoc opt">!</span> \
-  avimux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>videotestsrc<span class="gtkdoc opt">.</span>avi</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- This example pipeline will encode a test video source to H264 muxed in an
-AVI container, while ensuring a sane minimum quantization factor to avoid
-some (excessive) waste.
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1
-2</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">1000</span> <span class="gtkdoc opt">!</span> x264enc pass<span class="gtkdoc opt">=</span>quant <span class="gtkdoc opt">!</span> \
-  matroskamux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>videotestsrc<span class="gtkdoc opt">.</span>avi</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- This example pipeline will encode a test video source to H264 using fixed
-quantization, and muxes it in a Matroska container.
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1
-2</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">1000</span> <span class="gtkdoc opt">!</span> x264enc pass<span class="gtkdoc opt">=</span><span class="number">5</span> quantizer<span class="gtkdoc opt">=</span><span class="number">25</span> speed<span class="gtkdoc opt">-</span>preset<span class="gtkdoc opt">=</span><span class="number">6</span> profile<span class="gtkdoc opt">=</span><span class="number">1</span> <span class="gtkdoc opt">!</span> \
-  qtmux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>videotestsrc<span class="gtkdoc opt">.</span>mov</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- This example pipeline will encode a test video source to H264 using
-constant quality at around Q25 using the 'medium' speed/quality preset and
-restricting the options used so that the output is H.264 Baseline Profile
-compliant and finally multiplexing the output in Quicktime mov format.
-<div class="informalexample">
-  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
-    <tbody>
-      <tr>
-        <td class="listing_lines" align="right"><pre>1
-2</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">1000</span> <span class="gtkdoc opt">!</span> tee name<span class="gtkdoc opt">=</span>t <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> xvimagesink \
-  t<span class="gtkdoc opt">. !</span> queue <span class="gtkdoc opt">!</span> x264enc rc<span class="gtkdoc opt">-</span>lookahead<span class="gtkdoc opt">=</span><span class="number">5</span> <span class="gtkdoc opt">!</span> fakesink</pre></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
- This example pipeline will encode a test video source to H264 while
-displaying the input material at the same time.  As mentioned above,
-specific settings are needed in this case to avoid pipeline stalling.
-Depending on goals and context, other approaches are possible, e.g.
-tune=zerolatency might be configured, or queue sizes increased.
-</div>
-<p>
-</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp10878864"></a><h3>Element Information</h3>
+<a name="idp10784896"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -244,7 +133,7 @@ tune=zerolatency might be configured, or queue sizes increased.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp10886272"></a><h3>Element Pads</h3>
+<a name="idp10792304"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -283,7 +172,7 @@ tune=zerolatency might be configured, or queue sizes increased.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>video/x-h264, framerate=(fraction)[ 0/1, 2147483647/1 ], width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], stream-format=(string){ byte-stream, avc }, alignment=(string){ au }</td>
+<td>video/x-h264, framerate=(fraction)[ 0/1, 2147483647/1 ], width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], stream-format=(string){ byte-stream, avc }, alignment=(string){ au }, profile=(string){ high-10, high, main, constrained-baseline, high-10-intra }</td>
 </tr>
 </tbody>
 </table></div>
@@ -485,8 +374,8 @@ tune=zerolatency might be configured, or queue sizes increased.
 <div class="refsect2">
 <a name="GstX264Enc--subme"></a><h3>The <code class="literal">"subme"</code> property</h3>
 <pre class="programlisting">  "subme"                    <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>                 : Read / Write</pre>
-<p>Subpixel motion estimation and partition decision quality: 1=fast, 6=best.</p>
-<p>Allowed values: [1,6]</p>
+<p>Subpixel motion estimation and partition decision quality: 1=fast, 10=best.</p>
+<p>Allowed values: [1,10]</p>
 <p>Default value: 1</p>
 </div>
 <hr>
@@ -567,7 +456,7 @@ tune=zerolatency might be configured, or queue sizes increased.
 <div class="refsect2">
 <a name="GstX264Enc--profile"></a><h3>The <code class="literal">"profile"</code> property</h3>
 <pre class="programlisting">  "profile"                  <span class="type">GstX264EncProfile</span>     : Read / Write</pre>
-<p>Apply restrictions to meet H.264 Profile constraints. This will override other properties if necessary.</p>
+<p>Apply restrictions to meet H.264 Profile constraints. This will override other properties if necessary. This will only be used if downstream elements do not specify a profile in their caps (DEPRECATED).</p>
 <p>Default value: main</p>
 </div>
 <hr>
@@ -591,13 +480,9 @@ tune=zerolatency might be configured, or queue sizes increased.
 <p>Preset name for non-psychovisual tuning options.</p>
 </div>
 </div>
-<div class="refsect1">
-<a name="gst-plugins-ugly-plugins-x264enc.see-also"></a><h2>See Also</h2>
-faac
-</div>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.17</div>
+          Generated by GTK-Doc V1.18</div>
 </body>
 </html>

@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, cvs and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for cvs/prerelease
-AC_INIT(GStreamer Ugly Plug-ins, 0.10.18,
+AC_INIT(GStreamer Ugly Plug-ins, 0.10.19,
     http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer,
     gst-plugins-ugly)
 
@@ -52,8 +52,8 @@ AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=0.10.26
-GSTPB_REQ=0.10.26
+GST_REQ=0.10.36
+GSTPB_REQ=0.10.36
 
 dnl *** autotools stuff ****
 
@@ -152,8 +152,8 @@ AG_GST_CHECK_FUNCTION
 dnl *** checks for dependency libraries ***
 
 dnl GLib is required
-AG_GST_GLIB_CHECK([2.20])
-ORC_CHECK([0.4.6])
+AG_GST_GLIB_CHECK([2.24])
+ORC_CHECK([0.4.11])
 
 dnl checks for gstreamer
 dnl uninstalled is selected preferentially -- see pkg-config(1)
@@ -207,10 +207,13 @@ dnl used in examples
 AG_GST_DEFAULT_ELEMENTS
 
 dnl *** plug-ins to include ***
-PKG_CHECK_MODULES(DRM, drm-service)
-AC_SUBST(DRM_CFLAGS)
-AC_SUBST(DRM_LIBS)
+PKG_CHECK_MODULES(DRM_CLIENT, drm-client)
+AC_SUBST(DRM_CLIENT_CFLAGS)
+AC_SUBST(DRM_CLIENT_LIBS)
 
+PKG_CHECK_MODULES(DRM_TRUSTED, drm-trusted)
+AC_SUBST(DRM_TRUSTED_CFLAGS)
+AC_SUBST(DRM_TRUSTED_LIBS)
 
 dnl these are all the gst plug-ins, compilable without additional libs
 AG_GST_CHECK_PLUGIN(asfdemux)
@@ -317,36 +320,14 @@ translit(dnm, m, l) AM_CONDITIONAL(USE_MAD, true)
 AG_GST_CHECK_FEATURE(MAD, [mad mp3 decoder], mad, [
 
   dnl check with pkg-config first
-  AG_GST_PKG_CHECK_MODULES(ID3TAG, id3tag >= 0.15)
-  if test "x$HAVE_ID3TAG" = "xno"; then
-    dnl fall back to oldskool detection
-    AC_CHECK_HEADER(id3tag.h, [
-      save_LIBS=$LIBS
-      LIBS="-lz"
-      AC_CHECK_LIB(id3tag, id3_tag_options,
-        HAVE_ID3TAG="yes" ID3TAG_LIBS="-lid3tag -lz")
-      LIBS=$save_LIBS
-      AC_SUBST(ID3TAG_LIBS)
-    ])
-  fi
-
-  dnl check with pkg-config first
   AG_GST_PKG_CHECK_MODULES(MAD, mad >= 0.15)
-  MAD_LIBS="$MAD_LIBS $ID3TAG_LIBS"
+  MAD_LIBS="$MAD_LIBS"
   if test "x$HAVE_MAD" = "xno"; then
     dnl fall back to oldskool detection
     AC_CHECK_HEADER(mad.h, [
       AC_CHECK_LIB(mad, mad_decoder_finish,
-        HAVE_MAD="yes" MAD_LIBS="-lmad $ID3TAG_LIBS")
+        HAVE_MAD="yes" MAD_LIBS="-lmad")
     ])
-  fi
-
-  if test "x$HAVE_ID3TAG" = "xyes"; then
-    AC_DEFINE(HAVE_ID3TAG, 1, [defined if libid3tag is available])
-  else
-    AC_MSG_WARN([libid3tag not available, MAD MP3 decoder will be built without
-                 ID3 tag reading support (which is not a problem, since ID3
-                 tags are usually handled by id3demux)])
   fi
 ])
 AC_SUBST(MAD_LIBS)
@@ -502,6 +483,7 @@ sed \
     -e 's/.* GST_MAJORMINOR$/#define GST_MAJORMINOR "'$GST_MAJORMINOR'"/' \
     -e "s,.* GST_PACKAGE_NAME$,#define GST_PACKAGE_NAME \"${GST_PACKAGE_NAME}\"," \
     -e 's/.* GST_PACKAGE_ORIGIN$/#define GST_PACKAGE_ORIGIN "Unknown package origin"/' \
+    -e "s,.* GST_PACKAGE_RELEASE_DATETIME$,#define GST_PACKAGE_RELEASE_DATETIME \"${GST_PACKAGE_RELEASE_DATETIME}\"," \
     -e 's/.* HAVE_CPU_I386$/#define HAVE_CPU_I386 1/' \
     -e 's/.* HAVE_FGETPOS$/#define HAVE_FGETPOS 1/' \
     -e 's/.* HAVE_FSETPOS$/#define HAVE_FSETPOS 1/' \

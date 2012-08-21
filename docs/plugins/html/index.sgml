@@ -21,7 +21,6 @@
 <ANCHOR id="GstAmrnbDec-struct" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbdec.html#GstAmrnbDec-struct">
 <ANCHOR id="gst-plugins-ugly-plugins-amrnbdec.property-details" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbdec.html#gst-plugins-ugly-plugins-amrnbdec.property-details">
 <ANCHOR id="GstAmrnbDec--variant" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbdec.html#GstAmrnbDec--variant">
-<ANCHOR id="gst-plugins-ugly-plugins-amrnbdec.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbdec.html#gst-plugins-ugly-plugins-amrnbdec.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-amrnbenc" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbenc.html">
 <ANCHOR id="gst-plugins-ugly-plugins-amrnbenc.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbenc.html#gst-plugins-ugly-plugins-amrnbenc.synopsis">
 <ANCHOR id="GstAmrnbEnc" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbenc.html#GstAmrnbEnc">
@@ -33,7 +32,6 @@
 <ANCHOR id="GstAmrnbEnc-struct" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbenc.html#GstAmrnbEnc-struct">
 <ANCHOR id="gst-plugins-ugly-plugins-amrnbenc.property-details" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbenc.html#gst-plugins-ugly-plugins-amrnbenc.property-details">
 <ANCHOR id="GstAmrnbEnc--band-mode" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbenc.html#GstAmrnbEnc--band-mode">
-<ANCHOR id="gst-plugins-ugly-plugins-amrnbenc.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrnbenc.html#gst-plugins-ugly-plugins-amrnbenc.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-amrwbdec" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrwbdec.html">
 <ANCHOR id="gst-plugins-ugly-plugins-amrwbdec.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrwbdec.html#gst-plugins-ugly-plugins-amrwbdec.synopsis">
 <ANCHOR id="GstAmrwbDec" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrwbdec.html#GstAmrwbDec">
@@ -41,7 +39,6 @@
 <ANCHOR id="gst-plugins-ugly-plugins-amrwbdec.description" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrwbdec.html#gst-plugins-ugly-plugins-amrwbdec.description">
 <ANCHOR id="gst-plugins-ugly-plugins-amrwbdec.details" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrwbdec.html#gst-plugins-ugly-plugins-amrwbdec.details">
 <ANCHOR id="GstAmrwbDec-struct" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrwbdec.html#GstAmrwbDec-struct">
-<ANCHOR id="gst-plugins-ugly-plugins-amrwbdec.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-amrwbdec.html#gst-plugins-ugly-plugins-amrwbdec.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-cdiocddasrc" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-cdiocddasrc.html">
 <ANCHOR id="gst-plugins-ugly-plugins-cdiocddasrc.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-cdiocddasrc.html#gst-plugins-ugly-plugins-cdiocddasrc.synopsis">
 <ANCHOR id="GstCdioCddaSrc" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-cdiocddasrc.html#GstCdioCddaSrc">
@@ -53,7 +50,6 @@
 <ANCHOR id="GstCdioCddaSrc-struct" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-cdiocddasrc.html#GstCdioCddaSrc-struct">
 <ANCHOR id="gst-plugins-ugly-plugins-cdiocddasrc.property-details" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-cdiocddasrc.html#gst-plugins-ugly-plugins-cdiocddasrc.property-details">
 <ANCHOR id="GstCdioCddaSrc--read-speed" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-cdiocddasrc.html#GstCdioCddaSrc--read-speed">
-<ANCHOR id="gst-plugins-ugly-plugins-cdiocddasrc.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-cdiocddasrc.html#gst-plugins-ugly-plugins-cdiocddasrc.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-lame" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lame.html">
 <ANCHOR id="gst-plugins-ugly-plugins-lame.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lame.html#gst-plugins-ugly-plugins-lame.synopsis">
 <ANCHOR id="GstLame" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lame.html#GstLame">
@@ -97,7 +93,6 @@
 <ANCHOR id="GstLame--vbr-min-bitrate" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lame.html#GstLame--vbr-min-bitrate">
 <ANCHOR id="GstLame--vbr-quality" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lame.html#GstLame--vbr-quality">
 <ANCHOR id="GstLame--xingheader" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lame.html#GstLame--xingheader">
-<ANCHOR id="gst-plugins-ugly-plugins-lame.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lame.html#gst-plugins-ugly-plugins-lame.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-lamemp3enc" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lamemp3enc.html">
 <ANCHOR id="gst-plugins-ugly-plugins-lamemp3enc.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lamemp3enc.html#gst-plugins-ugly-plugins-lamemp3enc.synopsis">
 <ANCHOR id="GstLameMP3Enc" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lamemp3enc.html#GstLameMP3Enc">
@@ -114,7 +109,6 @@
 <ANCHOR id="GstLameMP3Enc--mono" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lamemp3enc.html#GstLameMP3Enc--mono">
 <ANCHOR id="GstLameMP3Enc--quality" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lamemp3enc.html#GstLameMP3Enc--quality">
 <ANCHOR id="GstLameMP3Enc--target" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lamemp3enc.html#GstLameMP3Enc--target">
-<ANCHOR id="gst-plugins-ugly-plugins-lamemp3enc.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-lamemp3enc.html#gst-plugins-ugly-plugins-lamemp3enc.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-mad" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mad.html">
 <ANCHOR id="gst-plugins-ugly-plugins-mad.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mad.html#gst-plugins-ugly-plugins-mad.synopsis">
 <ANCHOR id="GstMad" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mad.html#GstMad">
@@ -126,7 +120,6 @@
 <ANCHOR id="gst-plugins-ugly-plugins-mad.property-details" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mad.html#gst-plugins-ugly-plugins-mad.property-details">
 <ANCHOR id="GstMad--half" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mad.html#GstMad--half">
 <ANCHOR id="GstMad--ignore-crc" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mad.html#GstMad--ignore-crc">
-<ANCHOR id="gst-plugins-ugly-plugins-mad.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mad.html#gst-plugins-ugly-plugins-mad.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-mp3parse" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mp3parse.html">
 <ANCHOR id="gst-plugins-ugly-plugins-mp3parse.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mp3parse.html#gst-plugins-ugly-plugins-mp3parse.synopsis">
 <ANCHOR id="GstMPEGAudioParse" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-mp3parse.html#GstMPEGAudioParse">
@@ -229,7 +222,6 @@
 <ANCHOR id="GstTwoLame--vbr" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-twolame.html#GstTwoLame--vbr">
 <ANCHOR id="GstTwoLame--vbr-level" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-twolame.html#GstTwoLame--vbr-level">
 <ANCHOR id="GstTwoLame--vbr-max-bitrate" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-twolame.html#GstTwoLame--vbr-max-bitrate">
-<ANCHOR id="gst-plugins-ugly-plugins-twolame.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-twolame.html#gst-plugins-ugly-plugins-twolame.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-synaesthesia" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-synaesthesia.html">
 <ANCHOR id="gst-plugins-ugly-plugins-synaesthesia.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-synaesthesia.html#gst-plugins-ugly-plugins-synaesthesia.synopsis">
 <ANCHOR id="gst-plugins-ugly-plugins-synaesthesia.description" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-synaesthesia.html#gst-plugins-ugly-plugins-synaesthesia.description">
@@ -285,7 +277,6 @@
 <ANCHOR id="GstX264Enc--psy-tune" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--psy-tune">
 <ANCHOR id="GstX264Enc--speed-preset" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--speed-preset">
 <ANCHOR id="GstX264Enc--tune" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-x264enc.html#GstX264Enc--tune">
-<ANCHOR id="gst-plugins-ugly-plugins-x264enc.see-also" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-x264enc.html#gst-plugins-ugly-plugins-x264enc.see-also">
 <ANCHOR id="gst-plugins-ugly-plugins-xingmux" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-xingmux.html">
 <ANCHOR id="gst-plugins-ugly-plugins-xingmux.synopsis" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-xingmux.html#gst-plugins-ugly-plugins-xingmux.synopsis">
 <ANCHOR id="GstXingMux" href="gst-plugins-ugly-plugins-0.10/gst-plugins-ugly-plugins-xingmux.html#GstXingMux">

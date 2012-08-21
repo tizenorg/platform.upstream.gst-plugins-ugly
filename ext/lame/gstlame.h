@@ -27,6 +27,8 @@
 G_BEGIN_DECLS
 
 #include <lame/lame.h>
+#include <gst/audio/gstaudioencoder.h>
+#include <gst/base/gstadapter.h>
 
 #define GST_TYPE_LAME \
   (gst_lame_get_type())
@@ -48,12 +50,12 @@ typedef struct _GstLameClass GstLameClass;
  * Opaque data structure.
  */
 struct _GstLame {
-  GstElement element;
+  GstAudioEncoder element;
 
   /*< private >*/
-  GstPad *srcpad, *sinkpad;
 
   gint samplerate;
+  gint out_samplerate;
   gint num_channels;
   gboolean setup;
 
@@ -90,17 +92,13 @@ struct _GstLame {
   gboolean emphasis;
   gint preset;
 
-  /* track this so we don't send a last buffer in eos handler after error */
-  GstFlowReturn  last_flow;
-
   lame_global_flags *lgf;
 
-  /* time tracker */
-  guint64 last_ts, last_offs, last_duration, eos_ts;
+  GstAdapter *adapter;
 };
 
 struct _GstLameClass {
-  GstElementClass parent_class;
+  GstAudioEncoderClass parent_class;
 };
 
 GType gst_lame_get_type(void);
