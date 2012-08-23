@@ -29,10 +29,6 @@
 #include <gst/gstinfo.h>
 #include <string.h>
 
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-#include "drm_util_pr.h"
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
-
 /* we are unlikely to deal with lengths > 2GB here any time soon, so just
  * return a signed int and use that for error reporting */
 gint
@@ -259,11 +255,7 @@ asf_payload_parse_replicated_data_extensions (AsfStream * stream,
               ext->len);
         }
         break;
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-      case ASF_PAYLOAD_EXTENSION_SYSTEM_ENCRYPTION_SAMPLE_ID:
-    	  	  GST_DEBUG ("ASF_PAYLOAD_EXTENSION_SYSTEM_ENCRYPTION_SAMPLE_ID");
-              break;
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
+
       default:
         GST_WARNING ("UNKNOWN PAYLOAD EXTENSION !");
         break;
@@ -392,12 +384,6 @@ gst_asf_demux_parse_payload (GstASFDemux * demux, AsfPacket * packet,
         && payload_len) {
       payload.buf = asf_packet_create_payload_buffer (packet, p_data, p_size,
           payload_len);
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-      /* PlayReady Decryption */
-      if (demux->hFileHandle) {
-		drm_util_pr_decrypt_payload (demux->hFileHandle, &payload);
-      }
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
       /* n-th fragment of a fragmented media object? */
       if (payload.mo_offset != 0) {
         AsfPayload *prev;

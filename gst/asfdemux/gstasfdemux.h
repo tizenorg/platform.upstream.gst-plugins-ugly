@@ -26,11 +26,6 @@
 
 #include "asfheaders.h"
 
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-#include <drm_trusted_client.h>
-#include <drm_trusted_client_types.h>
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
-
 G_BEGIN_DECLS
   
 #define GST_TYPE_ASF_DEMUX \
@@ -265,10 +260,6 @@ struct _GstASFDemux {
   GstClockTime         current_ts;
   AsfTrickplayInfo trickplay_info;
 #endif
-
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-  DRM_DECRYPT_HANDLE hFileHandle;
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
 
 #ifdef CODEC_ENTRY
   /* Codec List Object */

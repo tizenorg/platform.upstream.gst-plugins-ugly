@@ -49,10 +49,6 @@
 #include "asfheaders.h"
 #include "asfpacket.h"
 
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-#include "drm_util_pr.h"
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
-
 static GstStaticPadTemplate gst_asf_demux_sink_template =
 GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
@@ -134,9 +130,6 @@ static gboolean gst_asf_demux_index_table_parse_payload (GstASFDemux * demux, As
     gint lentype, const guint8 ** p_data, guint * p_size, AsfKeyPacketInfo *keyinfo);
 static gboolean gst_asf_demux_push_sidx_queue(GstASFDemux * demux, GQueue *sidx_queue, gint *packet_num, AsfKeyPacketInfo *keyinfo);
 #endif
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-static void gst_asf_demux_print_tag (const GstTagList * list, const gchar * tag, gpointer data);
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
 #ifdef CODEC_ENTRY
 static GstFlowReturn
 gst_asf_demux_process_codec_list (GstASFDemux * demux, guint8 * data, guint64 size);
@@ -288,15 +281,6 @@ gst_asf_demux_reset (GstASFDemux * demux, gboolean chain_reset)
 
   demux->speed_packets = 1;
 
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-  /* DeInit playready */
-  if (demux->hFileHandle) {
-    if (drm_util_pr_finalize(&demux->hFileHandle) == FALSE) {
-        GST_ERROR_OBJECT(demux, "drm_util_pr_finalize() error");
-    }
-    demux->hFileHandle = NULL;
-  }
-#endif
   if (chain_reset) {
     GST_LOG_OBJECT (demux, "Restarting");
     gst_segment_init (&demux->segment, GST_FORMAT_TIME);
@@ -429,15 +413,6 @@ gst_asf_demux_sink_event (GstPad * pad, GstEvent * event)
 
   GST_LOG_OBJECT (demux, "handling %s event", GST_EVENT_TYPE_NAME (event));
   switch (GST_EVENT_TYPE (event)) {
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-    case GST_EVENT_TAG: {
-      GstTagList *taglist = NULL;
-      gst_event_parse_tag (event, &taglist);
-      gst_tag_list_foreach (taglist, gst_asf_demux_print_tag, demux);
-      gst_event_unref (event);
-      break;
-    }
-#endif
     case GST_EVENT_NEWSEGMENT:{
       GstFormat newsegment_format;
       gint64 newsegment_start, stop, time;
@@ -2600,32 +2575,6 @@ gst_asf_demux_add_audio_stream (GstASFDemux * demux,
 
   /* asf_stream_audio is the same as gst_riff_strf_auds, but with an
    * additional two bytes indicating extradata. */
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-  if (audio->codec_tag == 0x5052) {
-    guint16 extra_codec = 0;
-    GST_LOG_OBJECT(demux, "*********** PlayReady Audio Type Found ***********");
-
-#ifdef CODEC_ENTRY // Try to lookup codec list but time issue exists, there can be no codec list when entering here (codec list header comes later)
-    /* Find Audio Type */
-    int i=0, audio_index=-1;
-    for (i=0; i<demux->codec_entry_count; i++) {
-      if (demux->codec_entry[i].type == 0x0002)
-        audio_index = i;
-    }
-    if (audio_index < 0)
-      GST_ERROR_OBJECT(demux, "No audio type codec list found!!!!!");
-
-    caps = gst_riff_create_audio_caps ((guint16)demux->codec_entry[audio_index].information, NULL,
-        (gst_riff_strf_auds *) audio, extradata, NULL, &codec_name);
-#endif /* CODEC_ENTRY */
-
-    extra_codec = *(guint16*)((GST_BUFFER_DATA(extradata)+(size_left-2)));
-    GST_ERROR_OBJECT (demux, "0x%x", extra_codec);
-	
-    caps = gst_riff_create_audio_caps (extra_codec, NULL,
-      (gst_riff_strf_auds *) audio, extradata, NULL, &codec_name);
-  } else
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
     caps = gst_riff_create_audio_caps (audio->codec_tag, NULL,
         (gst_riff_strf_auds *) audio, extradata, NULL, &codec_name);
 
@@ -2681,20 +2630,6 @@ gst_asf_demux_add_video_stream (GstASFDemux * demux,
 
   GST_DEBUG ("video codec %" GST_FOURCC_FORMAT, GST_FOURCC_ARGS (video->tag));
 
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-  /* If video tag is playready content tag, then get actual codec tag from codec extra data */
-  if (video->tag == GST_MAKE_FOURCC ('P', 'R', 'D', 'Y')) {
-    guint32 extra_codec = 0;
-    GST_DEBUG_OBJECT(demux, "*********** PlayReady Video Type Found ***********");
-
-    extra_codec = *(guint32*)((GST_BUFFER_DATA(extradata)+(size_left-4)));
-    GST_DEBUG_OBJECT (demux, "0x%x", extra_codec);
-
-    caps = gst_riff_create_video_caps (extra_codec, NULL,
-                    (gst_riff_strf_vids *) video, extradata, NULL, &codec_name);
-
-  } else
-#endif
     /* yes, asf_stream_video_format and gst_riff_strf_vids are the same */
     caps = gst_riff_create_video_caps (video->tag, NULL,
                   (gst_riff_strf_vids *) video, extradata, NULL, &codec_name);
@@ -4203,10 +4138,6 @@ gst_asf_demux_process_object (GstASFDemux * demux, guint8 ** p_data,
     case ASF_OBJ_CONTENT_ENCRYPTION:
     case ASF_OBJ_EXT_CONTENT_ENCRYPTION:
     case ASF_OBJ_DIGITAL_SIGNATURE_OBJECT:
-#ifndef ASFDEMUX_ENABLE_PLAYREADY
-    /* This should be not treated as error because of playready */
-    case ASF_OBJ_UNKNOWN_ENCRYPTION_OBJECT:
-#endif
       goto error_encrypted;
     case ASF_OBJ_CODEC_COMMENT:
 #ifdef CODEC_ENTRY
@@ -5822,66 +5753,6 @@ error:
 }
 
 #endif
-
-#ifdef ASFDEMUX_ENABLE_PLAYREADY
-/* PlayReady */
-
-static void
-gst_asf_demux_print_tag (const GstTagList * list, const gchar * tag, gpointer data)
-{
-  gint i, count;
-  GstASFDemux *demux = (GstASFDemux *)data;
-
-  count = gst_tag_list_get_tag_size (list, tag);
-
-  for (i = 0; i < count; i++) {
-    gchar *str;
-
-    if (gst_tag_get_type (tag) == G_TYPE_STRING) {
-      if (!gst_tag_list_get_string_index (list, tag, i, &str))
-        g_assert_not_reached ();
-    } else if (gst_tag_get_type (tag) == GST_TYPE_BUFFER) {
-      GstBuffer *img;
-
-      img = gst_value_get_buffer (gst_tag_list_get_value_index (list, tag, i));
-      if (img) {
-        gchar *caps_str;
-
-        caps_str = GST_BUFFER_CAPS (img) ?
-            gst_caps_to_string (GST_BUFFER_CAPS (img)) : g_strdup ("unknown");
-        str = g_strdup_printf ("buffer of %u bytes, type: %s",
-            GST_BUFFER_SIZE (img), caps_str);
-        g_free (caps_str);
-      } else {
-        str = g_strdup ("NULL buffer");
-      }
-    } else {
-      str =
-          g_strdup_value_contents (gst_tag_list_get_value_index (list, tag, i));
-    }
-
-    if (i == 0) {
-      g_print ("%16s: %s\n", gst_tag_get_nick (tag), str);
-
-      if (strcmp (gst_tag_get_nick(tag), "PlayReady File Path") == 0) {
-        if (demux->hFileHandle == NULL) {
-            if (drm_util_pr_init (&demux->hFileHandle, str) == TRUE) {
-                GST_DEBUG_OBJECT(demux, "Init playready DONE! [%s]", str);
-            } else {
-                GST_ERROR_OBJECT(demux, "Init playready FAILED.... [%s]", str);
-            }
-        } else {
-          GST_DEBUG_OBJECT(demux, "Already Init playready DONE! [%s]", str);
-        }
-      }
-    } else {
-      g_print ("%16s: %s\n", "", str);
-    }
-
-    g_free (str);
-  }
-}
-#endif /* ASFDEMUX_ENABLE_PLAYREADY */
 
 #ifdef CODEC_ENTRY
 static GstFlowReturn

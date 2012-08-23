@@ -206,15 +206,6 @@ AG_GST_SET_LEVEL_DEFAULT($GST_GIT)
 dnl used in examples
 AG_GST_DEFAULT_ELEMENTS
 
-dnl *** plug-ins to include ***
-PKG_CHECK_MODULES(DRM_CLIENT, drm-client)
-AC_SUBST(DRM_CLIENT_CFLAGS)
-AC_SUBST(DRM_CLIENT_LIBS)
-
-PKG_CHECK_MODULES(DRM_TRUSTED, drm-trusted)
-AC_SUBST(DRM_TRUSTED_CFLAGS)
-AC_SUBST(DRM_TRUSTED_LIBS)
-
 dnl these are all the gst plug-ins, compilable without additional libs
 AG_GST_CHECK_PLUGIN(asfdemux)
 AG_GST_CHECK_PLUGIN(dvdlpcmdec)

@@ -12,8 +12,6 @@ BuildRequires:  gst-plugins-base-devel
 BuildRequires:  pkgconfig(gstreamer-0.10) 
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(liboil-0.3)
-BuildRequires:  pkgconfig(drm-client)
-BuildRequires:  pkgconfig(drm-trusted)
 BuildRequires:  pkgconfig(opencore-amrnb)
 BuildRequires:  pkgconfig(opencore-amrwb)
 
