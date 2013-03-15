@@ -1,7 +1,7 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
 Version:    0.10.19
-Release:    6_1
+Release:    6
 Group:      Applications/Multimedia
 License:    LGPLv2+
 Source0:    %{name}-%{version}.tar.gz
