@@ -1,0 +1,9 @@
+Change-Id: Ief9794a2ebf77702f51b9263e2018f69a05df8fa
+Code-Review+1: Yan Yin <yan.yin@intel.com>
+Code-Review+2: Anas Nashif <anas.nashif@intel.com>
+Verified+1: Anas Nashif <anas.nashif@intel.com>
+Submitted-by: Anas Nashif <anas.nashif@intel.com>
+Submitted-at: Wed, 19 Jun 2013 18:39:28 -0700
+Reviewed-on: https://review.tizen.org/gerrit/4108
+Project: platform/upstream/gst-plugins-ugly
+Branch: refs/heads/tizen
