@@ -1,14 +1,13 @@
-Name:       gst-plugins-ugly
+Name:       gst-plugins-ugly0.10
 Summary:    GStreamer plugins from the "ugly" set
 Version:    0.10.19
 Release:    6
 Group:      Applications/Multimedia
 License:    LGPLv2+
 Source0:    %{name}-%{version}.tar.gz
-Patch0 :    gst-plugins-ugly-disable-gtk-doc.patch
 BuildRequires:  gettext-tools
 BuildRequires:  which
-BuildRequires:  gst-plugins-base-devel
+BuildRequires:  pkgconfig(gstreamer-plugins-base-0.10)
 BuildRequires:  pkgconfig(gstreamer-0.10) 
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(opencore-amrnb)
@@ -29,7 +28,6 @@ BuildRequires:  pkgconfig(opencore-amrwb)
 
 %prep
 %setup -q 
-%patch0 -p1
 
 
 %build

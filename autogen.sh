@@ -30,7 +30,7 @@ then
 fi
 
 
-CONFIGURE_DEF_OPT='--enable-maintainer-mode --enable-gtk-doc'
+CONFIGURE_DEF_OPT='--enable-maintainer-mode'
 
 autogen_options $@
 
