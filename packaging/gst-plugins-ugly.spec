@@ -5,6 +5,7 @@ Release:    0
 Group:      Multimedia/Audio
 License:    LGPL-2.0+
 Source0:    %{name}-%{version}.tar.gz
+Source1001: 	gst-plugins-ugly.manifest
 BuildRequires:  gettext-tools
 BuildRequires:  which
 BuildRequires:  gst-common
@@ -29,6 +30,7 @@ BuildRequires:  pkgconfig(opencore-amrwb)
 
 %prep
 %setup -q 
+cp %{SOURCE1001} .
 rm -rf common
 cp -a %{_datadir}/gst-common common
 find common -exec touch {} \;
@@ -62,6 +64,7 @@ make %{?jobs:-j%jobs}
 %make_install
 
 %files
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %license COPYING
 # check why this one is not being built - Anas
