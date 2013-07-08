@@ -1,0 +1,8 @@
+Change-Id: I638815d6ade4bb69005e5f875d463d9352b92f23
+Code-Review+2: Ryan Ware <ware@linux.intel.com>
+Verified+1: Ryan Ware <ware@linux.intel.com>
+Submitted-by: Ryan Ware <ware@linux.intel.com>
+Submitted-at: Mon, 08 Jul 2013 09:37:44 -0700
+Reviewed-on: https://review.tizen.org/gerrit/5170
+Project: platform/upstream/gst-plugins-ugly
+Branch: refs/heads/tizen
