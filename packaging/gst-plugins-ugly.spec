@@ -1,7 +1,7 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
 Version:    0.10.19
-Release:    6
+Release:    7
 Group:      Applications/Multimedia
 License:    LGPLv2+
 Source0:    %{name}-%{version}.tar.gz
@@ -60,6 +60,8 @@ make %{?jobs:-j%jobs}
 
 %install
 rm -rf %{buildroot}
+mkdir -p %{buildroot}/usr/share/license
+cp COPYING %{buildroot}/usr/share/license/%{name}
 %make_install
 
 
@@ -74,4 +76,4 @@ rm -rf %{buildroot}
 %{_libdir}/gstreamer-0.10/libgstamrwbdec.so
 %{_libdir}/gstreamer-0.10/libgstrmdemux.so
 %exclude %{_datadir}/gstreamer-0.10/presets/GstAmrnbEnc.prs
-
+%{_datadir}/license/%{name}
