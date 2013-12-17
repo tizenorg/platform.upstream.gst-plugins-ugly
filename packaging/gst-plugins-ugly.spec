@@ -14,6 +14,7 @@ BuildRequires:  pkgconfig(gstreamer-1.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(opencore-amrnb)
 BuildRequires:  pkgconfig(opencore-amrwb)
+BuildRequires:  libmad-devel
 
 %description
  GStreamer is a streaming media framework, based on graphs of filters
@@ -50,7 +51,6 @@ NOCONFIGURE=1 ./autogen.sh
  --disable-cdio\
  --disable-dvdread\
  --disable-dvdnav\
- --disable-mad\
  --disable-mpeg2dec\
  --disable-sidplay\
  --disable-twolame\
@@ -72,5 +72,6 @@ make %{?jobs:-j%jobs}
 %{_libdir}/gstreamer-1.0/libgstamrnb.so
 %{_libdir}/gstreamer-1.0/libgstamrwbdec.so
 %{_libdir}/gstreamer-1.0/libgstrmdemux.so
+%{_libdir}/gstreamer-1.0/libgstmad.so
 %exclude %{_datadir}/gstreamer-1.0/presets/GstAmrnbEnc.prs
 
