@@ -719,7 +719,10 @@ gst_asf_demux_handle_seek_event (GstASFDemux * demux, GstEvent * event)
   GST_DEBUG_OBJECT (demux, "seeking to time %" GST_TIME_FORMAT ", segment: "
       "%" GST_SEGMENT_FORMAT, GST_TIME_ARGS (segment.start), &segment);
 
-  seek_time = segment.start;
+  if (cur_type != GST_SEEK_TYPE_SET)
+    seek_time = segment.start;
+  else
+    seek_time = cur;
 
   /* FIXME: should check the KEY_UNIT flag; need to adjust position to
    * real start of data and segment_start to indexed time for key unit seek*/
@@ -1654,7 +1657,7 @@ gst_asf_demux_push_complete_payloads (GstASFDemux * demux, gboolean force)
     /* We have the whole packet now so we should push the packet to
      * the src pad now. First though we should check if we need to do
      * descrambling */
-    if (G_UNLIKELY (demux->span > 1)) {
+    if (G_UNLIKELY (stream->span > 1)) {
       gst_asf_demux_descramble_buffer (demux, stream, &payload->buf);
     }
 
@@ -2373,7 +2376,7 @@ gst_asf_demux_get_stream (GstASFDemux * demux, guint16 id)
   return NULL;
 }
 
-static void
+static AsfStream *
 gst_asf_demux_setup_pad (GstASFDemux * demux, GstPad * src_pad,
     GstCaps * caps, guint16 id, gboolean is_video, GstTagList * tags)
 {
@@ -2415,9 +2418,11 @@ gst_asf_demux_setup_pad (GstASFDemux * demux, GstPad * src_pad,
   ++demux->num_streams;
 
   stream->active = FALSE;
+
+  return stream;
 }
 
-static void
+static AsfStream *
 gst_asf_demux_add_audio_stream (GstASFDemux * demux,
     asf_stream_audio * audio, guint16 id, guint8 ** p_data, guint64 * p_size)
 {
@@ -2473,10 +2478,10 @@ gst_asf_demux_add_audio_stream (GstASFDemux * demux,
 
   ++demux->num_audio_streams;
 
-  gst_asf_demux_setup_pad (demux, src_pad, caps, id, FALSE, tags);
+  return gst_asf_demux_setup_pad (demux, src_pad, caps, id, FALSE, tags);
 }
 
-static void
+static AsfStream *
 gst_asf_demux_add_video_stream (GstASFDemux * demux,
     asf_stream_video_format * video, guint16 id,
     guint8 ** p_data, guint64 * p_size)
@@ -2558,7 +2563,7 @@ gst_asf_demux_add_video_stream (GstASFDemux * demux,
 
   ++demux->num_video_streams;
 
-  gst_asf_demux_setup_pad (demux, src_pad, caps, id, TRUE, tags);
+  return gst_asf_demux_setup_pad (demux, src_pad, caps, id, TRUE, tags);
 }
 
 static void
@@ -2617,7 +2622,7 @@ gst_asf_demux_parse_stream_object (GstASFDemux * demux, guint8 * data,
   guint type_specific_size G_GNUC_UNUSED;
   guint unknown G_GNUC_UNUSED;
   gboolean inspect_payload = FALSE;
-  AsfStream *stream;
+  AsfStream *stream = NULL;
 
   /* Get the rest of the header's header */
   if (size < (16 + 16 + 8 + 4 + 4 + 2 + 4))
@@ -2671,7 +2676,7 @@ gst_asf_demux_parse_stream_object (GstASFDemux * demux, guint8 * data,
       GST_INFO ("Object is an audio stream with %u bytes of additional data",
           audio_object.size);
 
-      gst_asf_demux_add_audio_stream (demux, &audio_object, stream_id,
+      stream = gst_asf_demux_add_audio_stream (demux, &audio_object, stream_id,
           &data, &size);
 
       switch (correction_type) {
@@ -2689,26 +2694,25 @@ gst_asf_demux_parse_stream_object (GstASFDemux * demux, guint8 * data,
           data_size = gst_asf_demux_get_uint16 (&data, &size);
           silence_data = gst_asf_demux_get_uint8 (&data, &size);
 
-          /* FIXME: shouldn't this be per-stream? */
-          demux->span = span;
+          stream->span = span;
 
           GST_DEBUG_OBJECT (demux, "Descrambling ps:%u cs:%u ds:%u s:%u sd:%u",
               packet_size, chunk_size, data_size, span, silence_data);
 
-          if (demux->span > 1) {
+          if (stream->span > 1) {
             if (chunk_size == 0 || ((packet_size / chunk_size) <= 1)) {
               /* Disable descrambling */
-              demux->span = 0;
+              stream->span = 0;
             } else {
               /* FIXME: this else branch was added for
                * weird_al_yankovic - the saga begins.asf */
-              demux->ds_packet_size = packet_size;
-              demux->ds_chunk_size = chunk_size;
+              stream->ds_packet_size = packet_size;
+              stream->ds_chunk_size = chunk_size;
             }
           } else {
             /* Descambling is enabled */
-            demux->ds_packet_size = packet_size;
-            demux->ds_chunk_size = chunk_size;
+            stream->ds_packet_size = packet_size;
+            stream->ds_chunk_size = chunk_size;
           }
 #if 0
           /* Now skip the rest of the silence data */
@@ -2757,8 +2761,8 @@ gst_asf_demux_parse_stream_object (GstASFDemux * demux, guint8 * data,
         goto not_enough_data;
       }
 
-      gst_asf_demux_add_video_stream (demux, &video_format_object, stream_id,
-          &data, &size);
+      stream = gst_asf_demux_add_video_stream (demux, &video_format_object,
+          stream_id, &data, &size);
 
       break;
     }
@@ -2771,7 +2775,6 @@ gst_asf_demux_parse_stream_object (GstASFDemux * demux, guint8 * data,
       break;
   }
 
-  stream = gst_asf_demux_get_stream (demux, stream_id);
   if (stream)
     stream->inspect_payload = inspect_payload;
   return stream;
@@ -3571,8 +3574,13 @@ gst_asf_demux_process_simple_index (GstASFDemux * demux, guint8 * data,
     demux->sidx_entries = g_new0 (AsfSimpleIndexEntry, count);
 
     for (i = 0; i < count; ++i) {
-      if (G_UNLIKELY (size <= 6))
+      if (G_UNLIKELY (size < 6)) {
+        /* adjust for broken files, to avoid having entries at the end
+         * of the parsed index that point to time=0. Resulting in seeking to
+         * the end of the file leading back to the beginning */
+        demux->sidx_num_entries -= (count - i);
         break;
+      }
       demux->sidx_entries[i].packet = gst_asf_demux_get_uint32 (&data, &size);
       demux->sidx_entries[i].count = gst_asf_demux_get_uint16 (&data, &size);
       GST_LOG_OBJECT (demux, "%" GST_TIME_FORMAT " = packet %4u  count : %2d",
@@ -4084,25 +4092,25 @@ gst_asf_demux_descramble_buffer (GstASFDemux * demux, AsfStream * stream,
   scrambled_buffer = *p_buffer;
 
   if (gst_buffer_get_size (scrambled_buffer) <
-      demux->ds_packet_size * demux->span)
+      stream->ds_packet_size * stream->span)
     return;
 
   for (offset = 0; offset < gst_buffer_get_size (scrambled_buffer);
-      offset += demux->ds_chunk_size) {
-    off = offset / demux->ds_chunk_size;
-    row = off / demux->span;
-    col = off % demux->span;
-    idx = row + col * demux->ds_packet_size / demux->ds_chunk_size;
+      offset += stream->ds_chunk_size) {
+    off = offset / stream->ds_chunk_size;
+    row = off / stream->span;
+    col = off % stream->span;
+    idx = row + col * stream->ds_packet_size / stream->ds_chunk_size;
     GST_DEBUG ("idx=%u, row=%u, col=%u, off=%u, ds_chunk_size=%u", idx, row,
-        col, off, demux->ds_chunk_size);
+        col, off, stream->ds_chunk_size);
     GST_DEBUG ("scrambled buffer size=%" G_GSIZE_FORMAT
         ", span=%u, packet_size=%u", gst_buffer_get_size (scrambled_buffer),
-        demux->span, demux->ds_packet_size);
+        stream->span, stream->ds_packet_size);
     GST_DEBUG ("gst_buffer_get_size (scrambled_buffer) = %" G_GSIZE_FORMAT,
         gst_buffer_get_size (scrambled_buffer));
     sub_buffer =
-        gst_buffer_copy_region (scrambled_buffer, GST_BUFFER_COPY_NONE,
-        idx * demux->ds_chunk_size, demux->ds_chunk_size);
+        gst_buffer_copy_region (scrambled_buffer, GST_BUFFER_COPY_MEMORY,
+        idx * stream->ds_chunk_size, stream->ds_chunk_size);
     if (!offset) {
       descrambled_buffer = sub_buffer;
     } else {
