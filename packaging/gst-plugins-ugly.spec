@@ -1,6 +1,6 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
-Version:    1.2.0
+Version:    1.2.4
 Release:    0
 Group:      Multimedia/Audio
 License:    LGPL-2.0+
