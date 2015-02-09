@@ -1,12 +1,11 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
-Version:    1.2.4
+Version:    1.4.1
 Release:    0
 Group:      Multimedia/Audio
 License:    LGPL-2.0+
 Source0:    %{name}-%{version}.tar.gz
 Source100:      common.tar.bz2
-Source1001: 	gst-plugins-ugly.manifest
 BuildRequires:  gettext-tools
 BuildRequires:  which
 BuildRequires:  pkgconfig(gstreamer-plugins-base-1.0)
@@ -31,7 +30,6 @@ BuildRequires:  pkgconfig(opencore-amrwb)
 %prep
 %setup -q
 %setup -q -T -D -a 100
-cp %{SOURCE1001} .
 
 %build
 export V=1
