@@ -1,8 +1,8 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
 Version:    1.4.1
-Release:    0
-Group:      Multimedia/Audio
+Release:    1
+Group:      Multimedia/Framework
 License:    LGPL-2.0+
 Source0:    %{name}-%{version}.tar.gz
 Source100:      common.tar.bz2
@@ -63,11 +63,10 @@ make %{?jobs:-j%jobs}
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %license COPYING
-# check why this one is not being built - Anas
-#%{_libdir}/gstreamer-1.0/libgstmpegaudioparse.so
 %{_libdir}/gstreamer-1.0/libgstasf.so
 %{_libdir}/gstreamer-1.0/libgstxingmux.so
 %{_libdir}/gstreamer-1.0/libgstamrnb.so
 %{_libdir}/gstreamer-1.0/libgstamrwbdec.so
 %{_libdir}/gstreamer-1.0/libgstrmdemux.so
 %exclude %{_datadir}/gstreamer-1.0/presets/GstAmrnbEnc.prs
+
