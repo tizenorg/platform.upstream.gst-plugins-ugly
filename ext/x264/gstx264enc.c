@@ -56,31 +56,35 @@
  * non-x264enc streams/branches filling up and blocking upstream. They can
  * be fixed by relaxing the default time/size/buffer limits on the queue
  * elements in the non-x264 branches, or using a (single) multiqueue element
- * for all branches. Also see the last example below.
+ * for all branches. Also see the last example below. You can also work around
+ * this problem by setting the tune=zerolatency property, but this will affect
+ * overall encoding quality so may not be appropriate for your use case.
  * </note>
  *
  * <refsect2>
  * <title>Example pipeline</title>
  * |[
- * gst-launch -v videotestsrc num-buffers=1000 ! x264enc qp-min=18 ! \
+ * gst-launch-1.0 -v videotestsrc num-buffers=1000 ! x264enc qp-min=18 ! \
  *   avimux ! filesink location=videotestsrc.avi
  * ]| This example pipeline will encode a test video source to H264 muxed in an
  * AVI container, while ensuring a sane minimum quantization factor to avoid
- * some (excessive) waste.
+ * some (excessive) waste. You should ideally never put H264 into an AVI
+ * container (or really anything else, for that matter) - use Matroska or
+ * MP4/QuickTime or MPEG-TS instead.
  * |[
- * gst-launch -v videotestsrc num-buffers=1000 ! x264enc pass=quant ! \
- *   matroskamux ! filesink location=videotestsrc.avi
+ * gst-launch-1.0 -v videotestsrc num-buffers=1000 ! x264enc pass=quant ! \
+ *   matroskamux ! filesink location=videotestsrc.mkv
  * ]| This example pipeline will encode a test video source to H264 using fixed
  * quantization, and muxes it in a Matroska container.
  * |[
- * gst-launch -v videotestsrc num-buffers=1000 ! x264enc pass=5 quantizer=25 speed-preset=6 ! video/x-h264, profile=baseline ! \
+ * gst-launch-1.0 -v videotestsrc num-buffers=1000 ! x264enc pass=5 quantizer=25 speed-preset=6 ! video/x-h264, profile=baseline ! \
  *   qtmux ! filesink location=videotestsrc.mov
  * ]| This example pipeline will encode a test video source to H264 using
  * constant quality at around Q25 using the 'medium' speed/quality preset and
  * restricting the options used so that the output is H.264 Baseline Profile
  * compliant and finally multiplexing the output in Quicktime mov format.
  * |[
- * gst-launch -v videotestsrc num-buffers=1000 ! tee name=t ! queue ! xvimagesink \
+ * gst-launch-1.0 -v videotestsrc num-buffers=1000 ! tee name=t ! queue ! videoconvert ! autovideosink \
  *   t. ! queue ! x264enc rc-lookahead=5 ! fakesink
  * ]| This example pipeline will encode a test video source to H264 while
  * displaying the input material at the same time.  As mentioned above,
@@ -147,6 +151,7 @@ enum
   ARG_SPEED_PRESET,
   ARG_PSY_TUNE,
   ARG_TUNE,
+  ARG_FRAME_PACKING,
 };
 
 #define ARG_THREADS_DEFAULT            0        /* 0 means 'auto' which is 1.5x number of CPU cores */
@@ -187,6 +192,7 @@ static GString *x264enc_defaults;
 #define ARG_SPEED_PRESET_DEFAULT       6        /* 'medium' preset - matches x264 CLI default */
 #define ARG_PSY_TUNE_DEFAULT           0        /* no psy tuning */
 #define ARG_TUNE_DEFAULT               0        /* no tuning */
+#define ARG_FRAME_PACKING_DEFAULT      -1       /* automatic (none, or from input caps) */
 
 enum
 {
@@ -387,6 +393,52 @@ gst_x264_enc_build_tunings_string (GstX264Enc * x264enc)
   if (x264enc->tunings->len)
     GST_DEBUG_OBJECT (x264enc, "Constructed tunings string: %s",
         x264enc->tunings->str);
+}
+
+#define GST_X264_ENC_FRAME_PACKING_TYPE (gst_x264_enc_frame_packing_get_type())
+static GType
+gst_x264_enc_frame_packing_get_type (void)
+{
+  static GType fpa_type = 0;
+
+  static const GEnumValue fpa_types[] = {
+    {-1, "Automatic (use incoming video information)", "auto"},
+    {0, "checkerboard - Left and Right pixels alternate in a checkerboard pattern", "checkerboard"},
+    {1, "column interleaved - Alternating pixel columns represent Left and Right views", "column-interleaved"},
+    {2, "row interleaved - Alternating pixel rows represent Left and Right views", "row-interleaved"},
+    {3, "side by side - The left half of the frame contains the Left eye view, the right half the Right eye view", "side-by-side"},
+    {4, "top bottom - L is on top, R on bottom", "top-bottom"},
+    {5, "frame interleaved - Each frame contains either Left or Right view alternately", "frame-interleaved"},
+    {0, NULL, NULL}
+  };
+
+  if (!fpa_type) {
+    fpa_type = g_enum_register_static ("GstX264EncFramePacking", fpa_types);
+  }
+  return fpa_type;
+}
+
+static gint
+gst_x264_enc_mview_mode_to_frame_packing (GstVideoMultiviewMode mode)
+{
+  switch (mode) {
+    case GST_VIDEO_MULTIVIEW_MODE_CHECKERBOARD:
+      return 0;
+    case GST_VIDEO_MULTIVIEW_MODE_COLUMN_INTERLEAVED:
+      return 1;
+    case GST_VIDEO_MULTIVIEW_MODE_ROW_INTERLEAVED:
+      return 2;
+    case GST_VIDEO_MULTIVIEW_MODE_SIDE_BY_SIDE:
+      return 3;
+    case GST_VIDEO_MULTIVIEW_MODE_TOP_BOTTOM:
+      return 4;
+    case GST_VIDEO_MULTIVIEW_MODE_FRAME_BY_FRAME:
+      return 5;
+    default:
+      break;
+  }
+
+  return -1;
 }
 
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
@@ -683,6 +735,40 @@ done:
   return fcaps;
 }
 
+static gboolean
+gst_x264_enc_sink_query (GstVideoEncoder * enc, GstQuery * query)
+{
+  GstPad *pad = GST_VIDEO_ENCODER_SINK_PAD (enc);
+  gboolean ret = FALSE;
+
+  GST_DEBUG ("Received %s query on sinkpad, %" GST_PTR_FORMAT,
+      GST_QUERY_TYPE_NAME (query), query);
+
+  switch (GST_QUERY_TYPE (query)) {
+    case GST_QUERY_ACCEPT_CAPS:{
+      GstCaps *acceptable, *caps;
+
+      acceptable = gst_x264_enc_get_supported_input_caps ();
+      if (!acceptable) {
+        acceptable = gst_pad_get_pad_template_caps (pad);
+      }
+
+      gst_query_parse_accept_caps (query, &caps);
+
+      gst_query_set_accept_caps_result (query,
+          gst_caps_is_subset (caps, acceptable));
+      gst_caps_unref (acceptable);
+      ret = TRUE;
+    }
+      break;
+    default:
+      ret = GST_VIDEO_ENCODER_CLASS (parent_class)->sink_query (enc, query);
+      break;
+  }
+
+  return ret;
+}
+
 static void
 gst_x264_enc_class_init (GstX264EncClass * klass)
 {
@@ -711,6 +797,7 @@ gst_x264_enc_class_init (GstX264EncClass * klass)
   gstencoder_class->getcaps = GST_DEBUG_FUNCPTR (gst_x264_enc_sink_getcaps);
   gstencoder_class->propose_allocation =
       GST_DEBUG_FUNCPTR (gst_x264_enc_propose_allocation);
+  gstencoder_class->sink_query = GST_DEBUG_FUNCPTR (gst_x264_enc_sink_query);
 
   /* options for which we don't use string equivalents */
   g_object_class_install_property (gobject_class, ARG_PASS,
@@ -755,11 +842,17 @@ gst_x264_enc_class_init (GstX264EncClass * klass)
           ARG_OPTION_STRING_DEFAULT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  g_object_class_install_property (gobject_class, ARG_FRAME_PACKING,
+      g_param_spec_enum ("frame-packing", "Frame Packing",
+          "Set frame packing mode for Stereoscopic content",
+          GST_X264_ENC_FRAME_PACKING_TYPE, ARG_FRAME_PACKING_DEFAULT,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   /* options for which we _do_ use string equivalents */
   g_object_class_install_property (gobject_class, ARG_THREADS,
       g_param_spec_uint ("threads", "Threads",
           "Number of threads used by the codec (0 for automatic)",
-          0, 4, ARG_THREADS_DEFAULT,
+          0, G_MAXINT, ARG_THREADS_DEFAULT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /* NOTE: this first string append doesn't require the ':' delimiter but the
    * rest do */
@@ -1028,6 +1121,7 @@ gst_x264_enc_init (GstX264Enc * encoder)
   encoder->speed_preset = ARG_SPEED_PRESET_DEFAULT;
   encoder->psy_tune = ARG_PSY_TUNE_DEFAULT;
   encoder->tune = ARG_TUNE_DEFAULT;
+  encoder->frame_packing = ARG_FRAME_PACKING_DEFAULT;
 
   x264_param_default (&encoder->x264param);
 
@@ -1104,6 +1198,10 @@ gst_x264_enc_start (GstVideoEncoder * encoder)
   GstX264Enc *x264enc = GST_X264_ENC (encoder);
 
   x264enc->current_byte_stream = GST_X264_ENC_STREAM_FORMAT_FROM_PROPERTY;
+
+  /* make sure that we have enough time for first DTS,
+     this is probably overkill for most streams */
+  gst_video_encoder_set_min_pts (encoder, GST_SECOND * 60 * 60 * 1000);
 
   return TRUE;
 }
@@ -1468,9 +1566,18 @@ gst_x264_enc_init_encoder (GstX264Enc * encoder)
     }
   }
 
+  /* Set 3D frame packing */
+  if (encoder->frame_packing != GST_VIDEO_MULTIVIEW_MODE_NONE)
+    encoder->x264param.i_frame_packing = encoder->frame_packing;
+  else
+    encoder->x264param.i_frame_packing =
+        gst_x264_enc_mview_mode_to_frame_packing (GST_VIDEO_INFO_MULTIVIEW_MODE
+        (info));
+
+  GST_DEBUG_OBJECT (encoder, "Stereo frame packing = %d",
+      encoder->x264param.i_frame_packing);
+
   encoder->reconfig = FALSE;
-  /* good start, will be corrected if needed */
-  encoder->dts_offset = 0;
 
   GST_OBJECT_UNLOCK (encoder);
 
@@ -1712,11 +1819,44 @@ gst_x264_enc_set_src_caps (GstX264Enc * encoder, GstCaps * caps)
   state = gst_video_encoder_set_output_state (GST_VIDEO_ENCODER (encoder),
       outcaps, encoder->input_state);
   GST_DEBUG_OBJECT (encoder, "output caps: %" GST_PTR_FORMAT, state->caps);
+
+  /* If set, local frame packing setting overrides any upstream config */
+  switch (encoder->frame_packing) {
+    case 0:
+      GST_VIDEO_INFO_MULTIVIEW_MODE (&state->info) =
+          GST_VIDEO_MULTIVIEW_MODE_CHECKERBOARD;
+      break;
+    case 1:
+      GST_VIDEO_INFO_MULTIVIEW_MODE (&state->info) =
+          GST_VIDEO_MULTIVIEW_MODE_COLUMN_INTERLEAVED;
+      break;
+    case 2:
+      GST_VIDEO_INFO_MULTIVIEW_MODE (&state->info) =
+          GST_VIDEO_MULTIVIEW_MODE_ROW_INTERLEAVED;
+      break;
+    case 3:
+      GST_VIDEO_INFO_MULTIVIEW_MODE (&state->info) =
+          GST_VIDEO_MULTIVIEW_MODE_SIDE_BY_SIDE;
+      break;
+    case 4:
+      GST_VIDEO_INFO_MULTIVIEW_MODE (&state->info) =
+          GST_VIDEO_MULTIVIEW_MODE_TOP_BOTTOM;
+      break;
+    case 5:
+      GST_VIDEO_INFO_MULTIVIEW_MODE (&state->info) =
+          GST_VIDEO_MULTIVIEW_MODE_FRAME_BY_FRAME;
+      break;
+    default:
+      break;
+  }
+
   gst_video_codec_state_unref (state);
 
   tags = gst_tag_list_new_empty ();
   gst_tag_list_add (tags, GST_TAG_MERGE_REPLACE, GST_TAG_ENCODER, "x264",
-      GST_TAG_ENCODER_VERSION, X264_BUILD, NULL);
+      GST_TAG_ENCODER_VERSION, X264_BUILD,
+      GST_TAG_MAXIMUM_BITRATE, encoder->bitrate * 1024,
+      GST_TAG_NOMINAL_BITRATE, encoder->bitrate * 1024, NULL);
   gst_video_encoder_merge_tags (GST_VIDEO_ENCODER (encoder), tags,
       GST_TAG_MERGE_REPLACE);
   gst_tag_list_unref (tags);
@@ -1728,25 +1868,27 @@ static void
 gst_x264_enc_set_latency (GstX264Enc * encoder)
 {
   GstVideoInfo *info = &encoder->input_state->info;
+  gint max_delayed_frames;
+  GstClockTime latency;
+
+  max_delayed_frames = x264_encoder_maximum_delayed_frames (encoder->x264enc);
 
   if (info->fps_n) {
-    GstClockTime latency;
-    gint max_delayed_frames;
-    max_delayed_frames = x264_encoder_maximum_delayed_frames (encoder->x264enc);
     latency = gst_util_uint64_scale_ceil (GST_SECOND * info->fps_d,
         max_delayed_frames, info->fps_n);
-
-    GST_INFO_OBJECT (encoder,
-        "Updating latency to %" GST_TIME_FORMAT " (%d frames)",
-        GST_TIME_ARGS (latency), max_delayed_frames);
-
-    gst_video_encoder_set_latency (GST_VIDEO_ENCODER (encoder), latency,
-        latency);
   } else {
-    /* We can't do live as we don't know our latency */
-    gst_video_encoder_set_latency (GST_VIDEO_ENCODER (encoder),
-        0, GST_CLOCK_TIME_NONE);
+    /* FIXME: Assume 25fps. This is better than reporting no latency at
+     * all and then later failing in live pipelines
+     */
+    latency = gst_util_uint64_scale_ceil (GST_SECOND * 1,
+        max_delayed_frames, 25);
   }
+
+  GST_INFO_OBJECT (encoder,
+      "Updating latency to %" GST_TIME_FORMAT " (%d frames)",
+      GST_TIME_ARGS (latency), max_delayed_frames);
+
+  gst_video_encoder_set_latency (GST_VIDEO_ENCODER (encoder), latency, latency);
 }
 
 static gboolean
@@ -1796,6 +1938,7 @@ gst_x264_enc_set_format (GstVideoEncoder * video_enc,
     GST_INFO_OBJECT (encoder,
         "downstream has ANY caps, outputting byte-stream");
     encoder->current_byte_stream = GST_X264_ENC_STREAM_FORMAT_BYTE_STREAM;
+    g_string_append_printf (encoder->option_string, ":annexb=1");
   } else if (allowed_caps) {
     GstStructure *s;
     const gchar *profile;
@@ -1920,7 +2063,19 @@ gst_x264_enc_finish (GstVideoEncoder * encoder)
 static gboolean
 gst_x264_enc_propose_allocation (GstVideoEncoder * encoder, GstQuery * query)
 {
+  GstX264Enc *self = GST_X264_ENC (encoder);
+  GstVideoInfo *info;
+  guint num_buffers;
+
   gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL);
+
+  if (!self->input_state)
+    return FALSE;
+
+  info = &self->input_state->info;
+  num_buffers = x264_encoder_maximum_delayed_frames (self->x264enc) + 1;
+
+  gst_query_add_allocation_pool (query, NULL, info->size, num_buffers, 0);
 
   return GST_VIDEO_ENCODER_CLASS (parent_class)->propose_allocation (encoder,
       query);
@@ -1964,7 +2119,6 @@ gst_x264_enc_handle_frame (GstVideoEncoder * video_enc,
 
   pic_in.i_type = X264_TYPE_AUTO;
   pic_in.i_pts = frame->pts;
-  pic_in.i_dts = frame->dts;
   pic_in.opaque = GINT_TO_POINTER (frame->system_frame_number);
 
   ret = gst_x264_enc_encode_frame (encoder, &pic_in, frame, &i_nal, TRUE);
@@ -2070,23 +2224,9 @@ gst_x264_enc_encode_frame (GstX264Enc * encoder, x264_picture_t * pic_in,
 
   /* we want to know if x264 is messing around with this */
   g_assert (frame->pts == pic_out.i_pts);
-  if (pic_out.b_keyframe) {
-    /* expect dts == pts, and also positive ts,
-     * so arrange for an offset if needed */
-    if (pic_out.i_dts + encoder->dts_offset != pic_out.i_pts) {
-      encoder->dts_offset = pic_out.i_pts - pic_out.i_dts;
-      GST_DEBUG_OBJECT (encoder, "determined dts offset %" G_GINT64_FORMAT,
-          encoder->dts_offset);
-    }
-  }
 
-  if (pic_out.i_dts + (gint64) encoder->dts_offset < 0) {
-    /* should be ok now, surprise if not */
-    GST_WARNING_OBJECT (encoder, "negative dts after offset compensation");
-    frame->dts = GST_CLOCK_TIME_NONE;
-  } else
-    frame->dts = pic_out.i_dts + encoder->dts_offset;
-
+  frame->dts = pic_out.i_dts;
+  frame->pts = pic_out.i_pts;
 
   if (pic_out.b_keyframe) {
     GST_DEBUG_OBJECT (encoder, "Output keyframe");
@@ -2341,6 +2481,9 @@ gst_x264_enc_set_property (GObject * object, guint prop_id,
       g_string_append_printf (encoder->option_string, ":interlaced=%d",
           encoder->interlaced);
       break;
+    case ARG_FRAME_PACKING:
+      encoder->frame_packing = g_value_get_enum (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -2476,6 +2619,9 @@ gst_x264_enc_get_property (GObject * object, guint prop_id,
       break;
     case ARG_OPTION_STRING:
       g_value_set_string (value, encoder->option_string_prop->str);
+      break;
+    case ARG_FRAME_PACKING:
+      g_value_set_enum (value, encoder->frame_packing);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

@@ -33,9 +33,9 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch audiotestsrc num-buffers=1000 ! audioconvert ! lamemp3enc ! xingmux ! filesink location=test.mp3
- * gst-launch filesrc location=test.mp3 ! xingmux ! filesink location=test2.mp3
- * gst-launch filesrc location=test.mp3 ! mp3parse ! xingmux ! filesink location=test2.mp3
+ * gst-launch-1.0 audiotestsrc num-buffers=1000 ! audioconvert ! lamemp3enc ! xingmux ! filesink location=test.mp3
+ * gst-launch-1.0 filesrc location=test.mp3 ! xingmux ! filesink location=test2.mp3
+ * gst-launch-1.0 filesrc location=test.mp3 ! mp3parse ! xingmux ! filesink location=test2.mp3
  * ]|
  * </refsect2>
  */
@@ -275,7 +275,10 @@ generate_xing_header (GstXingMux * xing)
     header &= 0xffff0fff;
     header |= bitrate << 12;
 
-    parse_header (header, &size, &spf, &rate);
+    if (!parse_header (header, &size, &spf, &rate)) {
+      GST_ERROR ("Failed to parse header!");
+      return NULL;
+    }
     xing_offset = get_xing_offset (header);
   } while (size < (4 + xing_offset + 4 + 4 + 4 + 4 + 100) && bitrate < 0xe);
 

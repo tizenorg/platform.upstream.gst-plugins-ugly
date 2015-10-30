@@ -8,6 +8,7 @@ config.guess
 config.sub
 config.rpath
 configure
+gst-plugins-ugly.spec
 libtool
 stamp-h
 stamp-h.in
@@ -21,6 +22,7 @@ install-sh
 depcomp
 autoregen.sh
 ABOUT-NLS
+/INSTALL
 _stdint.h
 gst-plugins-ugly-*.tar.*
 

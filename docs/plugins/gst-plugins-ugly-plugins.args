@@ -1021,7 +1021,7 @@
 <ARG>
 <NAME>GstX264Enc::threads</NAME>
 <TYPE>guint</TYPE>
-<RANGE><= 4</RANGE>
+<RANGE><= G_MAXINT</RANGE>
 <FLAGS>rw</FLAGS>
 <NICK>Threads</NICK>
 <BLURB>Number of threads used by the codec (0 for automatic).</BLURB>
@@ -1156,6 +1156,16 @@
 <NICK>Content tuning preset</NICK>
 <BLURB>Preset name for non-psychovisual tuning options.</BLURB>
 <DEFAULT></DEFAULT>
+</ARG>
+
+<ARG>
+<NAME>GstX264Enc::frame-packing</NAME>
+<TYPE>GstX264EncFramePacking</TYPE>
+<RANGE></RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>Frame Packing</NICK>
+<BLURB>Set frame packing mode for Stereoscopic content.</BLURB>
+<DEFAULT>Automatic (use incoming video information)</DEFAULT>
 </ARG>
 
 <ARG>

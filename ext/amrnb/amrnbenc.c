@@ -27,7 +27,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch filesrc location=abc.wav ! wavparse ! audioresample ! audioconvert ! amrnbenc ! filesink location=abc.amr
+ * gst-launch-1.0 filesrc location=abc.wav ! wavparse ! audioconvert ! audioresample ! amrnbenc ! filesink location=abc.amr
  * ]|
  * Please note that the above stream misses the header, that is needed to play
  * the stream.
@@ -171,6 +171,7 @@ gst_amrnbenc_class_init (GstAmrnbEncClass * klass)
 static void
 gst_amrnbenc_init (GstAmrnbEnc * amrnbenc)
 {
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_AUDIO_ENCODER_SINK_PAD (amrnbenc));
 }
 
 static gboolean

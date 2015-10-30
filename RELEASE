@@ -1,27 +1,19 @@
 
-Release notes for GStreamer Ugly Plugins 1.4.1
-
-The GStreamer team is pleased to announce a bugfix release of the stable
-1.4 release series. The 1.4 release series is adding new features on top
-of the 1.2 series and is part of the API and ABI-stable 1.x release
-series of the GStreamer multimedia framework that contains new features.
-The 1.4.x bugfix releases only contain important bugfixes compared to 1.4.0.
+Release notes for GStreamer Ugly Plugins 1.6.0
 
 
-Binaries for Android, iOS, Mac OS X and Windows are provided by the
-GStreamer project for this release.
+The GStreamer team is proud to announce a new major feature release in the
+stable 1.x API series of your favourite cross-platform multimedia framework!
 
 
-The 1.x series is a stable series targeted at end users. It is not API
-or ABI compatible with the 0.10.x series. It can, however, be installed
-in parallel with the 0.10.x series and will not affect an existing
-0.10.x installation.
+This release has been in the works for more than a year and is packed with new
+features, bug fixes and other improvements.
 
 
-The stable 1.4.x release series is API and ABI compatible with 1.0.x and
-any other 1.x release series in the future. Compared to 1.0.x it contains
-some new features and more intrusive changes that were considered too
-risky as a bugfix.
+See
+http://gstreamer.freedesktop.org/releases/1.6/
+for the full list of changes.
+
 
 
 "When you have to shoot, shoot.  Don't talk."
@@ -105,5 +97,7 @@ subscribe to the gstreamer-devel list.
         
 Contributors to this release
     
+      * Jan Schmidt
+      * Sebastian Dröge
       * Tim-Philipp Müller
  
