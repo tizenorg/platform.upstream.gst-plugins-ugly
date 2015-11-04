@@ -1,6 +1,6 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
-Version:    1.6.0
+Version:    1.6.1
 Release:    1
 Group:      Multimedia/Framework
 License:    LGPL-2.0+
@@ -51,8 +51,9 @@ NOCONFIGURE=1 ./autogen.sh
  --disable-twolame\
  --disable-realmedia\
  --disable-xingmux\
- --disable-x264
-
+ --disable-x264\
+ --disable-gtk-doc\
+ --disable-gtk-doc-html
 make %{?jobs:-j%jobs}
 
 %install
