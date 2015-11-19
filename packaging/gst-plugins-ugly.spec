@@ -5,6 +5,7 @@ Release:    1
 Group:      Multimedia/Framework
 License:    LGPL-2.0+
 Source:     http://gstreamer.freedesktop.org/src/gst-plugins-ugly/gst-plugins-ugly-%{version}.tar.xz
+Source100:  common.tar.gz
 
 BuildRequires:  gettext-tools
 BuildRequires:  which
@@ -27,6 +28,7 @@ BuildRequires:  pkgconfig(opencore-amrwb)
 
 %prep
 %setup -q -n gst-plugins-ugly-%{version}
+%setup -q -T -D -a 100
 
 %build
 export V=1
