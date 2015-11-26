@@ -21,13 +21,22 @@
  * SECTION:element-mad
  * @see_also: lame
  *
- * MP3 audio decoder.
+ * MP3 audio decoder. Note that while the mad plugin code is licensed under
+ * the LGPL, the libmad library itself is GPL licensed, so the effective
+ * runtime license of using the mad element is GPL.
+ *
+ * The mpg123audiodec and avdec_mp3 decoder elements are LGPL licensed and
+ * also tend to use less CPU for decoding.
+ *
+ * In general it doesn't matter which MP3 decoder you use, the main advantage
+ * of the mad decoder is that it also supports so-called 'freeform' mp3s which
+ * are mp3s with a bitrate higher than what the standard usually allows.
  *
  * <refsect2>
  * <title>Example pipelines</title>
  * |[
- * gst-launch filesrc location=music.mp3 ! mpegaudioparse ! mad ! audioconvert ! audioresample ! autoaudiosink
- * ]| Decode and play the mp3 file
+ * gst-launch-1.0 filesrc location=music.mp3 ! mpegaudioparse ! mad ! audioconvert ! audioresample ! autoaudiosink
+ * ]| Decode and play an mp3 file
  * </refsect2>
  */
 
@@ -135,6 +144,8 @@ gst_mad_init (GstMad * mad)
 
   dec = GST_AUDIO_DECODER (mad);
   gst_audio_decoder_set_tolerance (dec, 20 * GST_MSECOND);
+  gst_audio_decoder_set_use_default_pad_acceptcaps (dec, TRUE);
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_AUDIO_DECODER_SINK_PAD (dec));
 
   mad->half = FALSE;
   mad->ignore_crc = TRUE;

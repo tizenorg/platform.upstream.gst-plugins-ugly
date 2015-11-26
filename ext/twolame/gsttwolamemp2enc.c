@@ -33,16 +33,16 @@
  * <refsect2>
  * <title>Example pipelines</title>
  * |[
- * gst-launch -v audiotestsrc wave=sine num-buffers=100 ! audioconvert ! twolame ! filesink location=sine.mp2
+ * gst-launch-1.0 -v audiotestsrc wave=sine num-buffers=100 ! audioconvert ! twolame ! filesink location=sine.mp2
  * ]| Encode a test sine signal to MP2.
  * |[
- * gst-launch -v alsasrc ! audioconvert ! twolame bitrate=192 ! filesink location=alsasrc.mp2
+ * gst-launch-1.0 -v alsasrc ! audioconvert ! twolame bitrate=192 ! filesink location=alsasrc.mp2
  * ]| Record from a sound card using ALSA and encode to MP2
  * |[
- * gst-launch -v filesrc location=music.wav ! decodebin ! audioconvert ! audioresample ! twolame bitrate=192 ! id3v2mux ! filesink location=music.mp2
+ * gst-launch-1.0 -v filesrc location=music.wav ! decodebin ! audioconvert ! audioresample ! twolame bitrate=192 ! id3v2mux ! filesink location=music.mp2
  * ]| Transcode from a .wav file to MP2 (the id3v2mux element is optional)
  * |[
- * gst-launch -v cdda://5 ! audioconvert ! twolame bitrate=192 ! filesink location=track5.mp2
+ * gst-launch-1.0 -v cdda://5 ! audioconvert ! twolame bitrate=192 ! filesink location=track5.mp2
  * ]| Encode Audio CD track 5 to MP2
  * </refsect2>
  *
@@ -113,7 +113,7 @@ static GType
 gst_two_lame_mode_get_type (void)
 {
   static GType two_lame_mode_type = 0;
-  static GEnumValue two_lame_modes[] = {
+  static const GEnumValue two_lame_modes[] = {
     {TWOLAME_AUTO_MODE, "Auto", "auto"},
     {TWOLAME_STEREO, "Stereo", "stereo"},
     {TWOLAME_JOINT_STEREO, "Joint Stereo", "joint"},
@@ -134,7 +134,7 @@ static GType
 gst_two_lame_padding_get_type (void)
 {
   static GType two_lame_padding_type = 0;
-  static GEnumValue two_lame_padding[] = {
+  static const GEnumValue two_lame_padding[] = {
     {TWOLAME_PAD_NO, "No Padding", "never"},
     {TWOLAME_PAD_ALL, "Always Pad", "always"},
     {0, NULL, NULL}
@@ -152,7 +152,7 @@ static GType
 gst_two_lame_emphasis_get_type (void)
 {
   static GType two_lame_emphasis_type = 0;
-  static GEnumValue two_lame_emphasis[] = {
+  static const GEnumValue two_lame_emphasis[] = {
     {TWOLAME_EMPHASIS_N, "No emphasis", "none"},
     {TWOLAME_EMPHASIS_5, "50/15 ms", "5"},
     {TWOLAME_EMPHASIS_C, "CCIT J.17", "ccit"},
@@ -417,6 +417,8 @@ static void
 gst_two_lame_init (GstTwoLame * twolame)
 {
   GST_DEBUG_OBJECT (twolame, "starting initialization");
+
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_AUDIO_ENCODER_SINK_PAD (twolame));
 
   twolame->mode = gst_two_lame_default_settings.mode;
   twolame->psymodel = gst_two_lame_default_settings.psymodel;

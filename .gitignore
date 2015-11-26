@@ -21,6 +21,7 @@ install-sh
 depcomp
 autoregen.sh
 ABOUT-NLS
+/INSTALL
 _stdint.h
 gst-plugins-ugly-*.tar.*
 
