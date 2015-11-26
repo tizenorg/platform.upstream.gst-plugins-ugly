@@ -1,11 +1,12 @@
 Name:       gst-plugins-ugly
 Summary:    GStreamer plugins from the "ugly" set
-Version:    1.4.1
-Release:    2
+Version:    1.6.1
+Release:    1
 Group:      Multimedia/Framework
 License:    LGPL-2.0+
-Source0:    %{name}-%{version}.tar.gz
-Source100:      common.tar.bz2
+Source:     http://gstreamer.freedesktop.org/src/gst-plugins-ugly/gst-plugins-ugly-%{version}.tar.xz
+Source100:  common.tar.gz
+
 BuildRequires:  gettext-tools
 BuildRequires:  which
 BuildRequires:  pkgconfig(gstreamer-plugins-base-1.0)
@@ -25,10 +26,8 @@ BuildRequires:  pkgconfig(opencore-amrwb)
  This packages contains plugins from the "ugly" set, a set of
  good-quality plug-ins that might pose distribution problems.
 
-
-
 %prep
-%setup -q
+%setup -q -n gst-plugins-ugly-%{version}
 %setup -q -T -D -a 100
 
 %build
@@ -54,8 +53,9 @@ NOCONFIGURE=1 ./autogen.sh
  --disable-twolame\
  --disable-realmedia\
  --disable-xingmux\
- --disable-x264
-
+ --disable-x264\
+ --disable-gtk-doc\
+ --disable-gtk-doc-html
 make %{?jobs:-j%jobs}
 
 %install
@@ -63,10 +63,10 @@ make %{?jobs:-j%jobs}
 
 %files
 %manifest %{name}.manifest
-%defattr(-,root,root,-)
 %license COPYING
 %{_libdir}/gstreamer-1.0/libgstasf.so
 %{_libdir}/gstreamer-1.0/libgstamrnb.so
 %{_libdir}/gstreamer-1.0/libgstamrwbdec.so
 %exclude %{_datadir}/gstreamer-1.0/presets/GstAmrnbEnc.prs
+
 

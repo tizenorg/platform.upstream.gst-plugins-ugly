@@ -1,17 +1,17 @@
-DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
+DISTCHECK_CONFIGURE_FLAGS=--disable-gtk-doc
 
 SUBDIRS = \
-	gst-libs gst ext docs m4 tests common pkgconfig po
+	gst-libs gst ext m4 tests common pkgconfig po
 
 # include before EXTRA_DIST for win32 assignment
 include $(top_srcdir)/common/win32.mak
-	
+
 EXTRA_DIST = \
 	gst-plugins-ugly.spec depcomp \
 	AUTHORS COPYING NEWS README RELEASE REQUIREMENTS \
 	ChangeLog gst-plugins-ugly.doap autogen.sh \
 	$(win32)
-	
+
 
 DISTCLEANFILES = _stdint.h
 
