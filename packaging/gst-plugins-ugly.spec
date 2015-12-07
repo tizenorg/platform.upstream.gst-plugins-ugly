@@ -63,6 +63,7 @@ make %{?jobs:-j%jobs}
 
 %files
 %manifest %{name}.manifest
+%defattr(-,root,root,-)
 %license COPYING
 %{_libdir}/gstreamer-1.0/libgstasf.so
 %{_libdir}/gstreamer-1.0/libgstamrnb.so
