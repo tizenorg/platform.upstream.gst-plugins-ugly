@@ -3,7 +3,7 @@ Summary:    GStreamer plugins from the "ugly" set
 Version:    1.6.1
 Release:    1
 Group:      Multimedia/Framework
-License:    LGPL-2.0+
+License:    LGPL-2.1+
 Source:     http://gstreamer.freedesktop.org/src/gst-plugins-ugly/gst-plugins-ugly-%{version}.tar.xz
 Source100:  common.tar.gz
 
